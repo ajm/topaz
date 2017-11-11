@@ -140,8 +140,32 @@ int _compare_bitscore(const void *l, const void *r) {
     return -1;
 }
 
-void hit_print(hit_t* h, seq_t* q, seq_t *s) {
-#ifndef NO_OUTPUT
+void hit_print(hit_t* h, seq_t* q, seq_t *s, int fastmode) {
+
+    if(!fastmode) {
+        printf("%.*s\t%.*s\t%.2f\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%.3e\t%d\n",
+        seq_idlen(q), seq_idptr(q), 
+        seq_idlen(s), seq_idptr(s),
+        h->identity * 100,
+        h->length,
+        h->mismatch,
+        h->gapopen,
+        h->qstart,
+        h->qend,
+        h->sstart,
+        h->send,
+        h->evalue,
+        (int) h->bitscore);
+    }
+    else {
+        printf("%.*s\t%.*s\t%.3e\t%d\n",
+        seq_idlen(q), seq_idptr(q), 
+        seq_idlen(s), seq_idptr(s),
+        h->evalue,
+        (int) h->bitscore);
+    }
+
+#if 0
     // qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore
     printf("%.*s\t%.*s\t%.2f\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%.3e\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
         seq_idlen(q), seq_idptr(q), 
@@ -207,7 +231,7 @@ void output_top_hits(hitlist_t* hl, seq_t* query, db_t* db, options_t* opt) {
                 exit(EXIT_FAILURE);
             }
 
-            hit_print(h, query, tmp);
+            hit_print(h, query, tmp, opt->superfast);
             ++count;
         }
     }
