@@ -2,7 +2,7 @@
 #define H_GENERIC
 
 
-#define PROGRAM "SANS-serif"
+#define PROGRAM "TOPAZ"
 
 #define MIN(_a, _b) (((_a) < (_b)) ? (_a) : (_b))
 #define MAX(_a, _b) (((_a) > (_b)) ? (_a) : (_b))
