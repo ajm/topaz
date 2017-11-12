@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 #include <errno.h>
 #include <unistd.h>
 #include <sys/time.h>
@@ -51,8 +52,8 @@ search_t* search_alloc(char *queries, char *prefix, options_t *opt) {
         opt->db_size = s->db->Tsize - s->db->Psize; // - Psize because of delimiters
         opt->db_proteins = s->db->Psize;
 
-        fprintf(stderr, "db size = %llu\n", opt->db_size);
-        fprintf(stderr, "db proteins = %llu\n", opt->db_proteins);
+        fprintf(stderr, "db size = %" PRIu64 "\n", opt->db_size);
+        fprintf(stderr, "db proteins = %" PRIu64 "\n", opt->db_proteins);
     }
 
     s->timing = fopen("timing.txt", "w");
@@ -227,7 +228,7 @@ void output_top_hits(hitlist_t* hl, seq_t* query, db_t* db, options_t* opt) {
 
         if(h->evalue <= opt->evalue) {
             if((tmp = db_seq(db, h->db_index, &s)) == NULL) {
-                fprintf(stderr, "Error: protein at index %llu not found!", h->db_index);
+                fprintf(stderr, "Error: protein at index %" PRIu64 " not found!", h->db_index);
                 exit(EXIT_FAILURE);
             }
 

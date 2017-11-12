@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <inttypes.h>
 #include <string.h>
 #include <sys/mman.h>
 #include <sys/types.h>
@@ -48,17 +49,17 @@ int db_load(db_t *db) {
         return -1;
     }
 
-    fprintf(stderr, "read T (%s), file size is %lld bytes\n", T_fname, db->Tsize);
+    fprintf(stderr, "read T (%s), file size is %" PRIu64 " bytes\n", T_fname, db->Tsize);
 
     if((db->SA = (saidx64_t*) fmmap_ro(SA_fname, &db->SAsize)) == NULL) {
         return -1;
     }
 
-    fprintf(stderr, "read SA (%s), file size is %lld bytes\n", SA_fname, db->SAsize);
+    fprintf(stderr, "read SA (%s), file size is %" PRIu64 " bytes\n", SA_fname, db->SAsize);
 
 
     if(db->SAsize != (db->Tsize * sizeof(saidx64_t))) {
-        fprintf(stderr, "Error: SA (%s, %lld bytes) should be %lu x T (%s, %lld bytes)!\nExiting...\n", SA_fname, db->SAsize, sizeof(saidx64_t), T_fname, db->Tsize);
+        fprintf(stderr, "Error: SA (%s, %" PRIu64 " bytes) should be %lu x T (%s, %" PRIu64 " bytes)!\nExiting...\n", SA_fname, db->SAsize, sizeof(saidx64_t), T_fname, db->Tsize);
         exit(EXIT_FAILURE);
     }
 
@@ -71,13 +72,13 @@ int db_load(db_t *db) {
         return -1;
     }
 
-    fprintf(stderr, "read LCPLC (%s), file size is %lld bytes\n", LCPLC_fname, LCPsize);
+    fprintf(stderr, "read LCPLC (%s), file size is %" PRIu64 " bytes\n", LCPLC_fname, LCPsize);
 
     if((db->LCPCR = (saidx64_t*) fmmap_ro(LCPCR_fname, &LCPsize)) == NULL) {
         return -1;
     }
 
-    fprintf(stderr, "read LCPCR (%s), file size is %lld bytes\n", LCPCR_fname, LCPsize);
+    fprintf(stderr, "read LCPCR (%s), file size is %" PRIu64 " bytes\n", LCPCR_fname, LCPsize);
 
     free(LCPLC_fname);
     free(LCPCR_fname);
@@ -87,11 +88,11 @@ int db_load(db_t *db) {
         return -1;
     }
 
-    fprintf(stderr, "read protein headers (%s), file size is %lld bytes\n", phr_fname, db->Hsize);
+    fprintf(stderr, "read protein headers (%s), file size is %" PRIu64 " bytes\n", phr_fname, db->Hsize);
 
     // Psize = number of proteins
     db->Psize = strncount(db->headers, '\n', db->Hsize);
-    fprintf(stderr, "%lld proteins in database\n", db->Psize);
+    fprintf(stderr, "%" PRIu64 " proteins in database\n", db->Psize);
     
 
     if(_load_index(db) != 0) {
@@ -117,7 +118,7 @@ int _load_index(db_t *db) {
     }
 
     if(Isize != db->Psize * sizeof(position_t)) {
-        fprintf(stderr, "Error: index is the wrong size (read %lld, expected %lld)", Isize, db->Psize * sizeof(position_t));
+        fprintf(stderr, "Error: index is the wrong size (read %" PRIu64 ", expected %" PRIu64 ")", Isize, db->Psize * sizeof(position_t));
         exit(EXIT_FAILURE);
     }
 
@@ -141,8 +142,8 @@ int _load_index_manual(db_t *db) {
     db->index = (position_t *) malloc(db->Psize * sizeof(position_t));
 
     while((linelen = getline(&line, &linecap, f)) > 0) {
-        if((nmatch = sscanf(line, "%lld %d %lld %d\n", &pstart, &plen, &hstart, &hlen)) != 4) {
-            fprintf(stderr, "Error: line %lld of %s contained %d elements (expected 4)\n", linenum + 1, fname, nmatch);
+        if((nmatch = sscanf(line, "%" PRIu64 " %d %" PRIu64 " %d\n", &pstart, &plen, &hstart, &hlen)) != 4) {
+            fprintf(stderr, "Error: line %" PRIu64 " of %s contained %d elements (expected 4)\n", linenum + 1, fname, nmatch);
             exit(EXIT_FAILURE);
         }
 
@@ -155,14 +156,14 @@ int _load_index_manual(db_t *db) {
     }
 
     if(linenum != db->Psize) {
-        fprintf(stderr, "Error: expected %lld index entries, but read %lld from %s\n", db->Psize, linenum, fname);
+        fprintf(stderr, "Error: expected %" PRIu64 " index entries, but read %" PRIu64 " from %s\n", db->Psize, linenum, fname);
         exit(EXIT_FAILURE);
     }
 
     length = db->index[db->Psize-1].protein_start + db->index[db->Psize-1].protein_len;
 
     if(db->Tsize != (length + 1)) {
-        fprintf(stderr, "Error: index length is %lld, but T length is %lld ...\n", length, db->Tsize);
+        fprintf(stderr, "Error: index length is %" PRIu64 ", but T length is %" PRIu64 " ...\n", length, db->Tsize);
         exit(EXIT_FAILURE);
     }
 
@@ -180,24 +181,17 @@ int db_index(db_t *db, uint64_t pos, saidx64_t *index) {
         return -1;
     }
 
-    //fprintf(stderr, "pos = %lld\n", pos);
-
     for(i = 0, size = db->Psize, half = size >> 1; 
         0 < size; 
         size = half, half >>= 1) {
 
         tmp = db->index + i + half;
 
-        //fprintf(stderr, "  start=%lld len=%d\n", tmp->protein_start, tmp->protein_len);
-        //fprintf(stderr, "  i=%lld half=%lld size=%lld\n", i, half, size);
-
         if(pos < tmp->protein_start) {
-            //fprintf(stderr, "lower\n");
             continue;
         }
         
         if(pos > (tmp->protein_start + tmp->protein_len)) {
-            //fprintf(stderr, "higher\n");
             i += half + 1;
             half -= (size & 1) ^ 1;
             continue;

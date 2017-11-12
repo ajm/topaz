@@ -38,8 +38,6 @@ void suffix_free(suffix_t *suf) {
 }
 
 int suffix_increment(suffix_t *suf, db_t* db, options_t* opt) {
-    int lcp_length;
-    saidx64_t num_matches;
 
     suf->position += suf->direction;
 

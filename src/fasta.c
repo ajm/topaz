@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <inttypes.h>
 #include <string.h>
 #include <errno.h>
 #include <sys/types.h>
@@ -96,7 +97,9 @@ seq_t* fasta_next(fasta_t *fbuf, seq_t *sbuf) {
     for(i = fbuf->pos + 1; i < fbuf->size + 1; ++i) {
         if(i == fbuf->size || (fbuf->T[i-1] == '\n' && fbuf->T[i] == '>')) {
             if(_create_seq(tmp, fbuf->T + fbuf->pos, i - fbuf->pos - 1) < 0) {
-                fprintf(stderr, "Error: encountered a problem parsing FASTA file (%llu sequences were read without error)\n", fbuf->count);
+                fprintf(stderr, 
+                        "Error: encountered a problem parsing FASTA file (%" PRIu64 " sequences were read without error)\n", 
+                        fbuf->count);
                 exit(EXIT_FAILURE);
             }
             fbuf->pos = i;

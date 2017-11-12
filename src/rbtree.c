@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <inttypes.h>
 
 #include "rbtree.h"
 #include "vector.h"
@@ -548,17 +549,13 @@ void rb_prune(rbtree_t *t, int threshold, int (*prune_test)(void*, int), void (*
     rbnode_t *tmp, *copy;
     vector_t *stack;
     vector_t *rmlist;
-    //uint64_t key;
     
     rmlist = vector_alloc();
     stack = vector_alloc();
     vector_push(stack, t->root);
 
-    //assert(rb_check(t));
 
     while((tmp = (rbnode_t*) vector_pop(stack)) != NULL) {
-
-        //fprintf(stderr, "traverse %llu\n", tmp->key);
 
         if(tmp->left != t->nil)
             vector_push(stack, tmp->left);
@@ -573,32 +570,9 @@ void rb_prune(rbtree_t *t, int threshold, int (*prune_test)(void*, int), void (*
     while((tmp = vector_pop(rmlist)) != NULL) {
         copy = tmp;        
 
-        //fprintf(stderr, "rm %llu\n", tmp->key);
-
-        //tmp = 
         tmp = rb_delete(t, tmp);
 
-/*
-        if(tmp != rb_delete(t, tmp))
-            fprintf(stderr, "rb_delete returned different pointer!\n");
-
-        key = tmp->key;
-
-        if(rb_get(t, key) != NULL)
-            fprintf(stderr, "1. REMOVED NODE STILL IN TREE\n");
-        else 
-            fprintf(stderr, "1. REMOVED NODE NOT IN TREE\n");
-*/
-        //assert(rb_check(t));
-
         rb_node_free(t, tmp, payload_free); // XXX
-/*
-        if(rb_get(t, key) != NULL)
-            fprintf(stderr, "2. REMOVED NODE STILL IN TREE\n");
-        else 
-            fprintf(stderr, "2. REMOVED NODE NOT IN TREE\n");
-*/
-        //assert(rb_check(t));
     }
 
     vector_free(stack);
@@ -717,7 +691,7 @@ void rb_print(rbtree_t *t) {
     vector_push(stack, t->root);
 
     while((tmp = (rbnode_t*) vector_pop(stack)) != NULL) {
-        fprintf(stderr, "(%llu, %c) -> (%llu, %c) (%llu, %c), P=%c, root=%d\n", 
+        fprintf(stderr, "(%" PRIu64 ", %c) -> (%" PRIu64 ", %c) (%" PRIu64 ", %c), P=%c, root=%d\n", 
                                                 tmp->key, tmp->colour == BLACK ? 'B' : 'R',
                                                 tmp->left->key, tmp->left->colour == BLACK ? 'B' : 'R',
                                                 tmp->right->key, tmp->right->colour == BLACK ? 'B' : 'R',
@@ -738,9 +712,6 @@ int rb_check(rbtree_t *t) {
     vector_t* stack;
     int ret = 1;
 
-    //fprintf(stderr, "rb_check, |t| = %llu\n", t->count);
-    //rb_print(t);
-
     if(t->root == t->nil)
         return 1;
 
@@ -752,17 +723,17 @@ int rb_check(rbtree_t *t) {
 
     while((tmp = (rbnode_t*) vector_pop(stack)) != NULL) {
         if(tmp->left == NULL) {
-            fprintf(stderr, "(%llu) left is NULL!\n", tmp->key);
+            fprintf(stderr, "(%" PRIu64 ") left is NULL!\n", tmp->key);
             return 0;
         }
 
         if(tmp->right == NULL) {
-            fprintf(stderr, "(%llu) right is NULL!\n", tmp->key);
+            fprintf(stderr, "(%" PRIu64 ") right is NULL!\n", tmp->key);
             return 0;
         }
 
         if(tmp->parent == NULL) {
-            fprintf(stderr, "(%llu) parent is NULL!\n", tmp->key);
+            fprintf(stderr, "(%" PRIu64 ") parent is NULL!\n", tmp->key);
             return 0;
         }
 
@@ -773,7 +744,7 @@ int rb_check(rbtree_t *t) {
         }
 
         if(!ret) {
-            fprintf(stderr, "[BAD] (%llu) %c -> (%c, %c), p=%c, root=%d\n", tmp->key, tmp->colour == BLACK ? 'B' : 'R',
+            fprintf(stderr, "[BAD] (%" PRIu64 ") %c -> (%c, %c), p=%c, root=%d\n", tmp->key, tmp->colour == BLACK ? 'B' : 'R',
                                                 tmp->left->colour == BLACK ? 'B' : 'R',
                                                 tmp->right->colour == BLACK ? 'B' : 'R',
                                                 tmp->parent->colour == BLACK ? 'B' : 'R',
@@ -791,66 +762,4 @@ int rb_check(rbtree_t *t) {
     vector_free(stack);
     return ret;
 }
-
-/*
-void rb_increment(rbtree_t *t, uint64_t key) {
-    rbnode_t *tmp;
-
-    if((tmp = rb_search(t, key)) != t->nil) {
-        //fprintf(stderr, "%llu found, value = %llu\n", tmp->key, tmp->count);
-        tmp->count++;
-    }
-    else {
-        //fprintf(stderr, "%llu not found\n", key);
-        tmp = (rbnode_t *) malloc(sizeof(rbnode_t));
-        
-        tmp->key = key;
-        tmp->count = 1;
-        tmp->left = t->nil;
-        tmp->right = t->nil;
-        tmp->parent = t->nil;
-
-        rb_insert(t, tmp);
-    }
-}
-*/
-
-/*
-void rb_node_print(rbtree_t *t, rbnode_t *x) {
-
-    if(x->left != t->nil)
-        rb_node_print(t, x->left);
-
-    printf("%llu: %llu\n", x->key, x->count);
-
-    if(x->right != t->nil)
-        rb_node_print(t, x->right);
-}
-
-void rb_print2(rbtree_t *t) {
-    if(t->root != t->nil)
-        rb_node_print(t, t->root);
-}
-*/
-
-/*
-int main() {
-    rbtree_t *t;
-
-    t = rb_alloc();
-    
-    rb_increment(t, 0);
-    rb_increment(t, 37);
-    rb_increment(t, 2);
-    rb_increment(t, 2);
-    rb_increment(t, 2);
-    rb_increment(t, 37);
-
-    rb_print(t);
-
-    rb_free(t);
-
-    return EXIT_SUCCESS;
-}
-*/
 

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <inttypes.h>
 #include <unistd.h>
 #include <math.h>
 
@@ -122,7 +123,7 @@ int query_find_suffixes(query_t* q) {
 }
 
 int query_fetch_alignment_batch(query_t* q) {
-    saidx64_t SAindex, Qoffset, Sindex, Soffset;
+    saidx64_t SAindex, Qoffset;
     int gapless_score, gapless_length;
     hit_t *h;
     int batch_size = q->opt->number_of_lookaheads;
@@ -235,7 +236,7 @@ int perform_alignment_with_profile(hit_t *h, s_profile *profile, db_t *db, optio
     s = seq_alloc();
 
     if((tmp = db_seq(db, h->db_index, &s)) == NULL) {
-        fprintf(stderr, "Error: protein at index %llu not found!", h->db_index);
+        fprintf(stderr, "Error: protein at index %" PRIu64 " not found!", h->db_index);
         _exit(EXIT_FAILURE);
     }
 

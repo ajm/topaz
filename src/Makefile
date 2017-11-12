@@ -1,9 +1,9 @@
 CC=gcc
 #CC=gcc-5.2.0
 #CFLAGS=-Wall -O0 -c -DUSE_LCPX -g
-CFLAGS=-Wall -O3 -c -DUSE_LCPX -g -fopenmp -fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free #-DUSELEXICOGRAPHICAL #-DWITHGPERFTOOLS
-INCLUDES=-I. -I/usr/local/include #-I/home/ajmedlar/local/include
-LDFLAGS=-lm -L/usr/local/lib -fopenmp -L/home/ajmedlar/local/lib -ltcmalloc #-lprofiler
+CFLAGS=-Wall -Wno-unused-variable -O3 -c -DUSE_LCPX -g -fopenmp -fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free #-DUSELEXICOGRAPHICAL #-DWITHGPERFTOOLS
+INCLUDES=-I. -I/usr/local/include
+LDFLAGS=-lm -L/usr/local/lib -fopenmp -ltcmalloc #-L/home/ajmedlar/local/lib #-lprofiler
 SOURCES=main.c \
         index.c \
         demux.c \

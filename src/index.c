@@ -42,7 +42,7 @@ void serif_index(char *fname, char *prefix) {
         exit(EXIT_FAILURE);
     }
 
-    fprintf(stderr, "mmapped T (%s), file size is %lld bytes\n", T_fname, Tsize);
+    fprintf(stderr, "mmapped T (%s), file size is %" PRIu64 " bytes\n", T_fname, Tsize);
 
     SAsize = Tsize * sizeof(saidx64_t);
 
@@ -52,7 +52,7 @@ void serif_index(char *fname, char *prefix) {
         exit(EXIT_FAILURE);
     }
 
-    fprintf(stderr, "mmapped SA (%s), file size is %lld bytes\n", SA_fname, SAsize);
+    fprintf(stderr, "mmapped SA (%s), file size is %" PRIu64 " bytes\n", SA_fname, SAsize);
 
     // mmap inverse suffix array
     if((ISA = (saidx64_t*) fmmap_rw(ISA_fname, SAsize)) == NULL) {
@@ -60,7 +60,7 @@ void serif_index(char *fname, char *prefix) {
         exit(EXIT_FAILURE);
     }
 
-    fprintf(stderr, "mmapped ISA (%s), file size is %lld bytes\n", ISA_fname, SAsize);
+    fprintf(stderr, "mmapped ISA (%s), file size is %" PRIu64 " bytes\n", ISA_fname, SAsize);
 
     /* build suffix array */
     if(divsufsort64((unsigned char*) T, SA, Tsize) < 0) {
@@ -137,8 +137,8 @@ int create_index(char* prefix, uint64_t Tsize) {
     index = (position_t*) fmmap_rw(ind_fname, Isize);
 
     while((linelen = getline(&line, &linecap, f)) > 0) {
-        if((nmatch = sscanf(line, "%lld %d %lld %d\n", &pstart, &plen, &hstart, &hlen)) != 4) {
-            fprintf(stderr, "Error: line %lld of %s contained %d elements (expected 4)\n", linenum + 1, pin_fname, nmatch);
+        if((nmatch = sscanf(line, "%" PRIu64 " %d %" PRIu64 " %d\n", &pstart, &plen, &hstart, &hlen)) != 4) {
+            fprintf(stderr, "Error: line %" PRIu64 " of %s contained %d elements (expected 4)\n", linenum + 1, pin_fname, nmatch);
             exit(EXIT_FAILURE);
         }
 
@@ -151,14 +151,14 @@ int create_index(char* prefix, uint64_t Tsize) {
     }
 
     if(linenum != Psize) {
-        fprintf(stderr, "Error: expected %lld index entries, but read %lld from %s\n", Psize, linenum, pin_fname);
+        fprintf(stderr, "Error: expected %" PRIu64 " index entries, but read %" PRIu64 " from %s\n", Psize, linenum, pin_fname);
         exit(EXIT_FAILURE);
     }
 
     length = index[Psize-1].protein_start + index[Psize-1].protein_len;
 
     if(Tsize != (length + 1)) {
-        fprintf(stderr, "Error: index length is %lld, but T length is %lld ...\n", length, Tsize);
+        fprintf(stderr, "Error: index length is %" PRIu64 ", but T length is %" PRIu64 " ...\n", length, Tsize);
         exit(EXIT_FAILURE);
     }
 
@@ -185,19 +185,19 @@ int create_lcp(char *prefix, char *T, saidx64_t Tsize, saidx64_t *SA, saidx64_t 
         return -1;
     }
    
-    fprintf(stderr, "mmapped LCP (%s), file size is %lld bytes\n", LCP_fname, SAsize);
+    fprintf(stderr, "mmapped LCP (%s), file size is %" PRIu64 " bytes\n", LCP_fname, SAsize);
 
     if((LCPLC = (saidx64_t*) fmmap_rw(LCPLC_fname, SAsize)) == NULL) {
         return -1;
     }
 
-    fprintf(stderr, "mmapped LCP-LC (%s), file size is %lld bytes\n", LCPLC_fname, SAsize);
+    fprintf(stderr, "mmapped LCP-LC (%s), file size is %" PRIu64 " bytes\n", LCPLC_fname, SAsize);
 
     if((LCPCR = (saidx64_t*) fmmap_rw(LCPCR_fname, SAsize)) == NULL) {
         return -1;
     }
 
-    fprintf(stderr, "mmapped LCP-CR (%s), file size is %lld bytes\n", LCPCR_fname, SAsize);
+    fprintf(stderr, "mmapped LCP-CR (%s), file size is %" PRIu64 " bytes\n", LCPCR_fname, SAsize);
 
     
     build_lcp(T, SA, ISA, LCP, Tsize);
@@ -245,7 +245,7 @@ void build_lcp(char *T, saidx64_t *SA, saidx64_t *ISA, saidx64_t *LCP, saidx64_t
     }
 
     if(maxh > LCP_MAX) {
-        fprintf(stderr, "Critical Error: values in the LCP array cannot exceed %d (max. LCP = %lld), please _recompile_ with greater precision\n", LCP_MAX, maxh);
+        fprintf(stderr, "Critical Error: values in the LCP array cannot exceed %d (max. LCP = %" PRIu64 "), please _recompile_ with greater precision\n", LCP_MAX, maxh);
         exit(EXIT_FAILURE);
     }
 }
@@ -264,18 +264,6 @@ saidx64_t build_lcplr(saidx64_t *LCP, saidx64_t *LCPLC, saidx64_t *LCPCR, saidx6
 
     return MIN(LCPLC[start + half], LCPCR[start + half]);
 }
+
 #endif
-
-/*
-static 
-void print_sa(char *T, saidx64_t *SA, saidx64_t *LCP, saidx64_t *LCPLC, saidx64_t *LCPCR, saidx64_t n) {
-    saidx64_t i;
-
-    printf("  i LCP LCP-LC LCP-CR SA T\n");
-
-    for(i = 0; i < n; ++i) {
-        printf("%8lld%8lld%8lld%8lld%8lld  %s", i, LCP[i], LCPLC[i], LCPCR[i], SA[i], T + SA[i]);
-    }
-}
-*/
 

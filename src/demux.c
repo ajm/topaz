@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 #include <ctype.h>
 #include <errno.h>
 #include <sys/mman.h>
@@ -39,7 +40,7 @@ int demultiplex_fasta(char* fname, char* prefix) {
     fclose(psq);
     fclose(pin);
 
-    fprintf(stderr, "Read %llu sequences from %s\n", f->count, fname);
+    fprintf(stderr, "Read %" PRIu64 " sequences from %s\n", f->count, fname);
 
     fasta_free(f);
     seq_free(s);

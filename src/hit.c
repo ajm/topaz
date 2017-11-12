@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <math.h>
 #include <assert.h>
+#include <unistd.h>
 
 #include "hit.h"
 #include "rbtree.h"
