@@ -19,34 +19,26 @@ void usage() {
 "\t-f FASTA, --file FASTA\n"
 "\t-p STR, --prefix STR\n"
 "\t-T INT, --threads INT (number of threads, default = %d)\n"
-//"\t-w INT, --window INT\n"
-//"\t-v INT, --votes INT\n"
-//"\t-V INT, --votelist INT\n"
 "\nOutput:\n"
 "\t-H INT, --hits INT (default = %d)\n"
 "\t-E FLOAT, --evalue FLOAT (default = %.1f)\n"
-"\nSeeding:\n"
+"\nAsymmetric SANS:\n"
+"\t-S INT, --seeds INT (default = %d)\n"
+"\t-A INT, --alignments INT (default = %d)\n"
 "\t-l INT, --minlength INT (minimum length common substring, default = %d)\n"
 "\t-s INT, --minscore INT (minimum raw score of common substring, default = %d)\n"
-//"\t-t INT, --scorethreshold INT (minimum score for full alignment, default = %d)\n"
-//"\t-c INT, --mindistance INT (minimum distance to sum raw scores from hits, default = %d)\n"
-//"\t-d INT, --maxdistance INT (maximum distance to sum raw scores from hits, default = %d)\n"
 "\nAlignment:\n"
 "\t-o INT, --gapopen INT (default = %d)\n"
 "\t-e INT, --gapext INT (default = %d)\n"
 "\t-m STR, --matrix STR (substitution matrix, PAM*, BLOSUM*, default = %s)\n"
-"\t-B, --blasttab (output BLAST outfmt 6 tabular format at the expense of speed)\n"
-"\t-L INT, --lookaheads INT (default = %d)\n"
-"\t-A INT, --alignments INT (default = %d)\n"
-"\nTemporary:\n"
 "\t-a FLOAT, --lambda FLOAT (E-value parameter, replace with lookup table like BLAST)\n"
 "\t-k FLOAT, --kappa FLOAT (E-value parameter, replace with lookup table like BLAST)\n"
 "\t-g FLOAT, --entropy FLOAT (E-value parameter, replace with lookup table like BLAST)\n"
+"\t-B, --blasttab (output BLAST outfmt 6 tabular format at the expense of speed)\n"
 "\n", PROGRAM, DEFAULT_THREADS,
       DEFAULT_HITS, DEFAULT_EVALUE,
-      DEFAULT_MINLENGTH, DEFAULT_MINSCORE,
-      DEFAULT_GAPOPEN, DEFAULT_GAPEXTEND, DEFAULT_SUBSTITUTION,
-      DEFAULT_LOOKAHEADS, DEFAULT_ALIGNMENTS);
+      DEFAULT_LOOKAHEADS, DEFAULT_ALIGNMENTS, DEFAULT_MINLENGTH, DEFAULT_MINSCORE,
+      DEFAULT_GAPOPEN, DEFAULT_GAPEXTEND, DEFAULT_SUBSTITUTION);
 }
 
 void str2sm(char *name, options_t *opt) {
@@ -144,7 +136,7 @@ int main(int argc, char** argv) {
 //        { "maxdistance",    required_argument,  NULL, 'd' },
         { "blasttab",       no_argument,        NULL, 'B' },
         { "alignments",     required_argument,  NULL, 'A' },
-        { "lookaheads",     required_argument,  NULL, 'L' },
+        { "seeds",          required_argument,  NULL, 'S' },
         { 0, 0, 0, 0 }
     };
     int c;
@@ -180,7 +172,7 @@ int main(int argc, char** argv) {
 
     options_defaults(&opt);
 
-    while((c = getopt_long(argc - 1, argv + 1, "hf:p:H:o:e:xE:ma:k:g:l:s:t:c:d:T:BA:L:", longopts, 0)) != -1) {
+    while((c = getopt_long(argc - 1, argv + 1, "hf:p:H:o:e:xE:ma:k:g:l:s:t:c:d:T:BA:S:", longopts, 0)) != -1) {
         switch(c) {
             case 'h':
                 usage();
@@ -327,7 +319,7 @@ int main(int argc, char** argv) {
                     exit(EXIT_FAILURE);
                 }
                 break;
-            case 'L':
+            case 'S':
                 opt.number_of_lookaheads = strtol(optarg, &tmp, 10);
                 if(*tmp != '\0') {
                     fprintf(stderr, "Error: invalid argument for --lookaheads, %s (%s)\n", strerror(errno), optarg);
