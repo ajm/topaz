@@ -2,7 +2,7 @@ CC=gcc
 #CC=gcc-5.2.0
 #CFLAGS=-Wall -O0 -c -DUSE_LCPX -g
 CFLAGS=-Wall -Wno-unused-variable -O3 -c -DUSE_LCPX -g -fopenmp -fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free #-DUSELEXICOGRAPHICAL #-DWITHGPERFTOOLS
-INCLUDES=-I. -I/usr/local/include
+INCLUDES=-I. -I./seg -I/usr/local/include
 LDFLAGS=-lm -L/usr/local/lib -fopenmp -ltcmalloc #-L/home/ajmedlar/local/lib #-lprofiler
 SOURCES=main.c \
         index.c \
@@ -25,7 +25,10 @@ SOURCES=main.c \
         ssw_wrapper.c \
         divsufsort.c \
         trsort.c \
-        sssort.c
+        sssort.c \
+        seg_wrapper.c \
+        seg/seg.c \
+        seg/genwin.c
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=topaz
 
