@@ -16,25 +16,33 @@ void run_seg(seq_t* s1) {
     struct Sequence *seq = (struct Sequence *) malloc(sizeof(struct Sequence));
     struct Segment *segs = (struct Segment *) NULL;
     struct Segment  *tmp;
+    int i;
 
     // copy sequence
     seq->length = seq_len(s1);
-    seq->seq = (char*) malloc(seq->length);
-    strncpy(seq_ptr(s1), seq->seq, seq->length);
+    seq->seq = seq_ptr(s1);
+    //seq->seq = (char*) malloc(seq->length);
+    //memcpy(seq->seq, seq_ptr(s1), seq->length);
 
     segseq(seq, &segs, 0);
     mergesegs(seq, segs);
 
-    fprintf(stderr, "PRE-SEG: %.*s\n", seq_len(s1), seq_ptr(s1));
+    //fprintf(stderr, "PRE-SEG: %.*s\n", seq->length, seq->seq);
 
-    // HARD MASK
     for (tmp = segs; tmp != NULL; tmp = tmp->next) {
-        memset(seq_ptr(s1) + tmp->begin, 'X', tmp->end - tmp->begin + 1);
+        // HARD MASK
+        //memset(seq->seq + tmp->begin, 'X', tmp->end - tmp->begin + 1);
+        
+        // SOFT MASK
+        for(i = tmp->begin; i < tmp->end - tmp->begin + 1; ++i) {
+            seq->seq[i] = seq->seq[i] + 32; // convert to lowercase
+        }
     }
 
-    fprintf(stderr, "POSTSEG: %.*s\n", seq_len(s1), seq_ptr(s1));
+    //fprintf(stderr, "POSTSEG: %.*s\n", seq->length, seq->seq);
 
     freesegs(segs);
-    closeseq(seq);
+    //closeseq(seq);
+    free(seq);
 }
 

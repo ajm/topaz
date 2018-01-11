@@ -86,7 +86,7 @@ int seq_seq(seq_t* s, char* buf, size_t len) {
 
     for(i = 0, j = 0; i < len; ++i) {
         if(buf[i] != '\n') {
-            sbuf[j++] = buf[i];
+            sbuf[j++] = upper_aa(buf[i]);
         }
     }
 

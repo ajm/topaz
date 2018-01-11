@@ -114,9 +114,9 @@ s_profile* get_ssw_profile(seq_t* s1, options_t* opt) {
 
     for(i = 0; i < seq_len(s1); ++i) {
 #ifdef USELEXICOGRAPHICAL
-        num[i] = aa_table[(int)seq_char(s1, i)];
+        num[i] = aa_table[(int) seq_char(s1, i)];
 #else
-        num[i] = aa_table2[(int)seq_char(s1, i)];
+        num[i] = aa_table2[(int) seq_char(s1, i)];
 #endif
     }
 
@@ -159,9 +159,9 @@ void align_using_ssw_profile(s_profile* profile, seq_t* s2, hit_t* hit, options_
 
     for(i = 0; i < seq_len(s2); ++i) {
 #ifdef USELEXICOGRAPHICAL
-        ref[i] = aa_table[(int)seq_char(s2, i)]; //seq_char(s2, i) - 'A';
+        ref[i] = aa_table[(int) upper_aa(seq_char(s2, i))]; //seq_char(s2, i) - 'A';
 #else
-        ref[i] = aa_table2[(int)seq_char(s2, i)]; // XXX
+        ref[i] = aa_table2[(int) upper_aa(seq_char(s2, i))]; // XXX
 #endif
     }
 
@@ -277,17 +277,17 @@ void align_using_ssw(seq_t* s1, seq_t* s2, hit_t* hit, options_t* opt) {
 
     for(i = 0; i < seq_len(s1); ++i) {
 #ifdef USELEXICOGRAPHICAL
-        num[i] = aa_table[(int)seq_char(s1, i)]; //seq_char(s1, i) - 'A';
+        num[i] = aa_table[(int) upper_aa(seq_char(s1, i))]; //seq_char(s1, i) - 'A';
 #else
-        num[i] = aa_table2[(int)seq_char(s1, i)]; // XXX
+        num[i] = aa_table2[(int) upper_aa(seq_char(s1, i))]; // XXX
 #endif
     }
 
     for(i = 0; i < seq_len(s2); ++i) {
 #ifdef USELEXICOGRAPHICAL
-        ref[i] = aa_table[(int)seq_char(s2, i)]; //seq_char(s2, i) - 'A';
+        ref[i] = aa_table[(int) upper_aa(seq_char(s2, i))]; //seq_char(s2, i) - 'A';
 #else
-        ref[i] = aa_table2[(int)seq_char(s2, i)]; // XXX
+        ref[i] = aa_table2[(int) upper_aa(seq_char(s2, i))]; // XXX
 #endif
     }
 

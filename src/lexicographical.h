@@ -32,6 +32,31 @@ static int8_t aa_table2[128] = {
     20,  2,  8, 18, 13, 17, 23, 14, 24,  7, 23, 23, 23, 23, 23, 23
   };
 
+static inline char upper_aa(char c) {
+    switch(c) {
+        case 'A': case 'B': case 'C': case 'D':
+        case 'E': case 'F': case 'G': case 'H': 
+        case 'I': case 'J': case 'K': case 'L': 
+        case 'M': case 'N': case 'O': case 'P': 
+        case 'Q': case 'R': case 'S': case 'T': 
+        case 'U': case 'V': case 'W': case 'X': 
+        case 'Y': case '*': case '\n': 
+            return c;
+
+        case 'a': case 'b': case 'c': case 'd':
+        case 'e': case 'f': case 'g': case 'h':
+        case 'i': case 'j': case 'k': case 'l':
+        case 'm': case 'n': case 'o': case 'p': 
+        case 'q': case 'r': case 's': case 't':
+        case 'u': case 'v': case 'w': case 'x':
+        case 'y': 
+            return c - 32;        
+
+        default:
+            return 'X';
+    }
+}
+
 static inline char internal2aa(char c) {
     switch(c) {
         case 'A': return 'A'; // 0
