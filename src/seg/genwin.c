@@ -38,9 +38,12 @@ struct strlist
 
 /*---------------------------------------------------------------(tmalloc)---*/
 
+#include <stdint.h>
+
 #define TESTMAX 1000
 void *tmalloc();
-int record_ptrs[TESTMAX] = {0,0,0,0};
+//int record_ptrs[TESTMAX] = {0,0,0,0};
+int64_t record_ptrs[TESTMAX] = {0,0,0,0};
 int rptr = 0;
 
 /*------------------------------------------------------------(genwininit)---*/
@@ -58,10 +61,10 @@ void genwininit()
 		
 	for (cp = cp0 = "ACDEFGHIKLMNPQRSTVWY"; (c = *cp) != '\0'; ++cp) {
 		i = cp - cp0;
-		aaindex[c] = i;
+		aaindex[(int)c] = i;
 		aaindex[tolower(c)] = i;
 		aachar[i] = tolower(c);
-		aaflag[c] = FALSE;
+		aaflag[(int)c] = FALSE;
 		aaflag[tolower(c)] = FALSE;
 	}
 	return;
@@ -417,7 +420,8 @@ void *tmalloc(size_t size)
       exit(2);
      }
 
-   record_ptrs[rptr] = (int) ptr;
+   //record_ptrs[rptr] = (int) ptr;
+   record_ptrs[rptr] = (int64_t) ptr;
    rptr++;
 
    return(ptr);
@@ -430,7 +434,8 @@ void tfree(void *ptr)
 
    for (i=0; i<rptr; i++)
      {
-      if (record_ptrs[i]==(int)ptr)
+      //if (record_ptrs[i]==(int)ptr)
+      if (record_ptrs[i]==(int64_t)ptr)
         {
          record_ptrs[i] = 0;
          break;

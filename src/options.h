@@ -61,6 +61,8 @@ typedef struct {
 //    int min_distance;
 //    int max_distance;
 
+    int seg_enabled;
+
     int superfast;
 
 } options_t;

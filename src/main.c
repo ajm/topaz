@@ -35,6 +35,7 @@ void usage() {
 "\t-k FLOAT, --kappa FLOAT (E-value parameter, replace with lookup table like BLAST)\n"
 "\t-g FLOAT, --entropy FLOAT (E-value parameter, replace with lookup table like BLAST)\n"
 "\t-B, --blasttab (output BLAST outfmt 6 tabular format at the expense of speed)\n"
+"\t-M, --noseg (do not mask sequences with SEG)\n"
 "\n", PROGRAM, DEFAULT_THREADS,
       DEFAULT_HITS, DEFAULT_EVALUE,
       DEFAULT_LOOKAHEADS, DEFAULT_ALIGNMENTS, DEFAULT_MINLENGTH, DEFAULT_MINSCORE,
@@ -103,6 +104,7 @@ void options_defaults(options_t *opt) {
     opt->number_of_lookaheads = DEFAULT_LOOKAHEADS;
     opt->number_of_alignments = DEFAULT_ALIGNMENTS;
     opt->superfast = 1;
+    opt->seg_enabled = 1;
 } 
 
 int main(int argc, char** argv) {
@@ -137,6 +139,7 @@ int main(int argc, char** argv) {
         { "blasttab",       no_argument,        NULL, 'B' },
         { "alignments",     required_argument,  NULL, 'A' },
         { "seeds",          required_argument,  NULL, 'S' },
+        { "noseg",          no_argument,        NULL, 'M' },
         { 0, 0, 0, 0 }
     };
     int c;
@@ -172,7 +175,7 @@ int main(int argc, char** argv) {
 
     options_defaults(&opt);
 
-    while((c = getopt_long(argc - 1, argv + 1, "hf:p:H:o:e:xE:ma:k:g:l:s:t:c:d:T:BA:S:", longopts, 0)) != -1) {
+    while((c = getopt_long(argc - 1, argv + 1, "hf:p:H:o:e:xE:ma:k:g:l:s:t:c:d:T:BA:S:M", longopts, 0)) != -1) {
         switch(c) {
             case 'h':
                 usage();
@@ -325,6 +328,10 @@ int main(int argc, char** argv) {
                     fprintf(stderr, "Error: invalid argument for --lookaheads, %s (%s)\n", strerror(errno), optarg);
                     exit(EXIT_FAILURE);
                 }
+                break;
+            case 'M':
+                opt.seg_enabled = 0;
+                fprintf(stderr, "WARNING: SEG disabled\n");
                 break;
             case '?':
             default :

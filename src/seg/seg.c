@@ -29,8 +29,7 @@ struct Segment
 #include <string.h>
 
 int window = 12;
-int downset = (window+1)/2 - 1;
-int upset = window - downset;;
+int downset, upset;
 double locut = 2.2;
 double hicut = 2.5;
 
@@ -95,6 +94,13 @@ struct Sequence* test() {
 
 /*------------------------------------------------------------------(main)---*/
 
+void seg_init() {
+    genwininit();
+    downset = (window+1)/2 - 1;
+    upset = window - downset;
+    entropy_init(window);
+}
+/*
 int main(int argc, char** argv) {
    //struct Database *db;
    struct Sequence *seq;
@@ -102,20 +108,20 @@ int main(int argc, char** argv) {
    //int ctime;
 
    genwininit();
-/* readlencorr(); */                        /* #include lencorr file */
+   //readlencorr();
    downset = (window+1)/2 - 1;
    upset = window - downset;
 
    entropy_init(window);
-/*
-   if ((db=opendbase(argv[1]))==NULL)
-     {
-      fprintf(stderr, "Error opening file %s\n", argv[1]);
-      exit(1);
-     }
 
-   for (seq=firstseq(db); seq!=NULL; seq=nextseq(db))
-*/
+   //if ((db=opendbase(argv[1]))==NULL)
+   //  {
+   //   fprintf(stderr, "Error opening file %s\n", argv[1]);
+   //   exit(1);
+   //  }
+
+   //for (seq=firstseq(db); seq!=NULL; seq=nextseq(db))
+
      {
       seq = test();
       segs = (struct Segment *) NULL;
@@ -135,7 +141,7 @@ int main(int argc, char** argv) {
 //   closedbase(db);
    exit(0);
   }
-
+*/
 /*---------------------------------------------------------------(segment)---*/
 
 void segseq(struct Sequence *seq, struct Segment **segs, int offset)
@@ -584,7 +590,7 @@ void freesegs(struct Segment *segs)
   }
 
 /*-----------------------------------------------------------------(usage)---*/
-
+/*
 void usage()
 
   {
@@ -612,4 +618,4 @@ Usage: seg <file> <window> <locut> <hicut> <options>\n\
             -q  prettyprint each segmented sequence (block format) \n");
    exit(1);
   }
-
+*/

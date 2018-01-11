@@ -8,6 +8,7 @@ struct Segment
    struct Segment *next;
   };
 
+void seg_init();
 void segseq(struct Sequence *seq, struct Segment **segs, int offset);
 void mergesegs(struct Sequence *seq, struct Segment *segs);
 void freesegs(struct Segment *segs);

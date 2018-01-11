@@ -28,6 +28,7 @@
 #include "suffix.h"
 #include "query.h"
 #include "work_queue.h"
+#include "seg_wrapper.h"
 
 //#include <gperftools/profiler.h>
 
@@ -252,7 +253,17 @@ void read_data(search_t* s) {
     seq_t* seq;
     query_t* query;
 
+    if(s->opt->seg_enabled) {
+        initialise_seg();
+    }
+
     while((seq = fasta_next(s->f, NULL)) != NULL) {
+
+        // if this is going to happen, it has to be now
+        if(s->opt->seg_enabled) {
+            run_seg(seq);
+        }
+
 #ifndef USELEXICOGRAPHICAL
         seq_2internal(seq);
 #endif
@@ -398,16 +409,16 @@ void *pthread_suffix_worker(void *arg) {
 void *pthread_generic_worker(void *arg) {
     search_t *s = (search_t*) arg;
     query_t *query;
-    int thread_id;
+    //int thread_id;
     double suffix_time, alignment_time;
 
     suffix_time = 0.0;
     alignment_time = 0.0;
-
+/*
     pthread_mutex_lock(&s->mutex);
     thread_id = s->thread_number++;
     pthread_mutex_unlock(&s->mutex);
-
+*/
     //fprintf(stderr, " -> i am thread %d (generic)\n", thread_id);
 
     while(_incomplete(s)) {

@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -8,8 +9,7 @@
 
 
 void initialise_seg() {
-    genwininit();
-    entropy_init(12); // window length from seg/seg.c
+    seg_init();
 }
 
 void run_seg(seq_t* s1) {

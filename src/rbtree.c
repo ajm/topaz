@@ -546,7 +546,7 @@ int rb_nth_score(rbtree_t *t, int num_items, int (*get_value)(void*)) {
 }
 
 void rb_prune(rbtree_t *t, int threshold, int (*prune_test)(void*, int), void (*payload_free)(void*)) {
-    rbnode_t *tmp, *copy;
+    rbnode_t *tmp; //, *copy;
     vector_t *stack;
     vector_t *rmlist;
     
@@ -568,7 +568,7 @@ void rb_prune(rbtree_t *t, int threshold, int (*prune_test)(void*, int), void (*
     }
 
     while((tmp = vector_pop(rmlist)) != NULL) {
-        copy = tmp;        
+        //copy = tmp;        
 
         tmp = rb_delete(t, tmp);
 
