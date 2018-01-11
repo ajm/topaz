@@ -8,6 +8,7 @@
 
 #include "genwin.h"
 #include "lnfac.h"
+#include "seg.h"
 
 /*---------------------------------------------------------------(defines)---*/
 
@@ -15,14 +16,14 @@
 #define MIN(a,b)	((a) <= (b) ? (a) : (b))
 
 /*---------------------------------------------------------------(structs)---*/
-
+/*
 struct Segment
   {
    int begin;
    int end;
    struct Segment *next;
   };
-
+*/
 /*---------------------------------------------------------------(globals)---*/
 
 #include <string.h>
