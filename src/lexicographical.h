@@ -57,6 +57,22 @@ static inline char upper_aa(char c) {
     }
 }
 
+static inline char upper_aa_only(char c) {
+    switch(c) {
+        case 'A': case 'B': case 'C': case 'D':
+        case 'E': case 'F': case 'G': case 'H':
+        case 'I': case 'J': case 'K': case 'L':
+        case 'M': case 'N': case 'O': case 'P':
+        case 'Q': case 'R': case 'S': case 'T':
+        case 'U': case 'V': case 'W': case 'X':
+        case 'Y': case '*': case '\n':
+            return c;
+
+        default:
+            return 'X';
+    }
+}
+
 static inline char internal2aa(char c) {
     switch(c) {
         case 'A': return 'A'; // 0
@@ -85,6 +101,33 @@ static inline char internal2aa(char c) {
         case 'X': return '*'; // 23
         case 'Y': return 'G'; // 24
         case '\n': return '\n';
+
+        case 'a': return 'a'; // 0
+        case 'b': return 'c'; // 1
+        case 'c': return 'm'; // 2
+        case 'd': return 'l'; // 3
+        case 'e': return 'j'; // 4
+        case 'f': return 'i'; // 5
+        case 'g': return 'v'; // 6
+        case 'h': return 't'; // 7
+        case 'i': return 's'; // 8
+        case 'j': return 'k'; // 9
+        case 'k': return 'r'; // 10
+        case 'l': return 'q'; // 11
+        case 'm': return 'z'; // 12
+        case 'n': return 'e'; // 13
+        case 'o': return 'd'; // 14
+        case 'p': return 'b'; // 15
+        case 'q': return 'n'; // 16
+        case 'r': return 'h'; // 17
+        case 's': return 'y'; // 18
+        case 't': return 'f'; // 19
+        case 'u': return 'w'; // 20
+        case 'v': return 'x'; // 21
+        case 'w': return 'p'; // 22
+        case 'x': return '*'; // 23
+        case 'y': return 'g'; // 24
+
         default : return 'X';
     }
 }
@@ -117,6 +160,33 @@ static inline char aa2internal(char c) {
         case '*': return 'X';
         case 'G': return 'Y';
         case '\n': return '\n';
+
+        // for softmasking
+        case 'a': return 'a';
+        case 'c': return 'b';
+        case 'm': return 'c';
+        case 'l': return 'd';
+        case 'j': return 'e';
+        case 'i': return 'f';
+        case 'v': return 'g';
+        case 't': return 'h';
+        case 's': return 'i';
+        case 'k': return 'j';
+        case 'r': return 'k';
+        case 'q': return 'l';
+        case 'z': return 'm';
+        case 'e': return 'n';
+        case 'd': return 'o';
+        case 'b': return 'p';
+        case 'n': return 'q';
+        case 'h': return 'r';
+        case 'y': return 's';
+        case 'f': return 't';
+        case 'w': return 'u';
+        case 'x': return 'v';
+        case 'p': return 'w';
+        case 'g': return 'y';
+
         default : return 'V'; // i.e. 'X'
     }
 }

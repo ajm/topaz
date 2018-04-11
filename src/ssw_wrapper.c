@@ -114,9 +114,9 @@ s_profile* get_ssw_profile(seq_t* s1, options_t* opt) {
 
     for(i = 0; i < seq_len(s1); ++i) {
 #ifdef USELEXICOGRAPHICAL
-        num[i] = aa_table[(int) seq_char(s1, i)];
+        num[i] = aa_table[(int) upper_aa(seq_char(s1, i))];
 #else
-        num[i] = aa_table2[(int) seq_char(s1, i)];
+        num[i] = aa_table2[(int) upper_aa(seq_char(s1, i))];
 #endif
     }
 

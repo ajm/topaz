@@ -31,12 +31,13 @@ void run_seg(seq_t* s1) {
 
     for (tmp = segs; tmp != NULL; tmp = tmp->next) {
         // HARD MASK
-        //memset(seq->seq + tmp->begin, 'X', tmp->end - tmp->begin + 1);
-        
+        memset(seq->seq + tmp->begin, 'X', tmp->end - tmp->begin + 1);
+        /*
         // SOFT MASK
         for(i = tmp->begin; i < tmp->end - tmp->begin + 1; ++i) {
             seq->seq[i] = seq->seq[i] + 32; // convert to lowercase
         }
+        */
     }
 
     //fprintf(stderr, "POSTSEG: %.*s\n", seq->length, seq->seq);

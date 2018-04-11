@@ -73,9 +73,9 @@ int sa_gapless(db_t *db, seq_t *q, int qoffset, saidx64_t position, options_t* o
         //}
 
 #ifdef USELEXICOGRAPHICAL
-        ind = (aa_table[(int)T[i]] * 25) + aa_table[(int)Q[i]];
+        ind = (aa_table[(int)T[i]] * 25) + aa_table[(int) upper_aa_only(Q[i])];
 #else
-        ind = (aa_table2[(int)T[i]] * 25) + aa_table2[(int)Q[i]];
+        ind = (aa_table2[(int)T[i]] * 25) + aa_table2[(int) upper_aa_only(Q[i])];
 #endif
 
         rawscore += (*opt->substitution)[ind];
@@ -119,9 +119,9 @@ int sa_hsp(db_t *db, seq_t *q, int qoffset, saidx64_t position, options_t* opt, 
         }
 
 #ifdef USELEXICOGRAPHICAL
-        ind = (aa_table[(int)T[i]] * 25) + aa_table[(int)Q[i]];
+        ind = (aa_table[(int)T[i]] * 25) + aa_table[(int) upper_aa_only(Q[i])];
 #else
-        ind = (aa_table2[(int)T[i]] * 25) + aa_table2[(int)Q[i]]; // XXX
+        ind = (aa_table2[(int)T[i]] * 25) + aa_table2[(int) upper_aa_only(Q[i])]; // XXX
 #endif
 
         rawscore_right += (*opt->substitution)[ind];
@@ -144,9 +144,9 @@ int sa_hsp(db_t *db, seq_t *q, int qoffset, saidx64_t position, options_t* opt, 
         }
 
 #ifdef USELEXICOGRAPHICAL
-        ind = (aa_table[(int)T[-i]] * 25) + aa_table[(int)Q[-i]];
+        ind = (aa_table[(int)T[-i]] * 25) + aa_table[(int) upper_aa_only(Q[-i])];
 #else
-        ind = (aa_table2[(int)T[-i]] * 25) + aa_table2[(int)Q[-i]]; // XXX
+        ind = (aa_table2[(int)T[-i]] * 25) + aa_table2[(int) upper_aa_only(Q[-i])]; // XXX
 #endif
 
         rawscore_left += (*opt->substitution)[ind];

@@ -115,7 +115,7 @@ void _progress(search_t* s) {
     pthread_mutex_lock(&s->mutex);
     
     gettimeofday(&current_time, NULL);
-
+/*
     fprintf(stderr, 
         "\r[%d/%d%s] suffix(%d) alignment(%d), %.1f sec      ", 
         s->queries_completed, 
@@ -124,6 +124,11 @@ void _progress(search_t* s) {
         wqueue2_length(s->q_search),
         wqueue2_length(s->q_alignment),
         elapsed_time(&s->start_time, &current_time) / 1000);
+*/
+    fprintf(stderr, "\rPROGRESS: %d/%d (%.1f sec)", 
+            s->queries_completed, 
+            s->queries_added, 
+            elapsed_time(&s->start_time, &current_time) / 1000);
 
     pthread_mutex_unlock(&s->mutex);
 }
@@ -431,7 +436,7 @@ void *pthread_generic_worker(void *arg) {
 //            ProfilerStop();
         }
 
-        //_progress(s);
+        _progress(s);
     }
 
     pthread_mutex_lock(&s->mutex);

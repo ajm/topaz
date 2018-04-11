@@ -100,8 +100,9 @@ int seq_2internal(seq_t* s) {
 
     buf = buffer_ptr(&s->seq_buf);
 
-    for(i = 0; i < s->seq_len; ++i)
+    for(i = 0; i < s->seq_len; ++i) {
         buf[i] = aa2internal(buf[i]);
+    }
 
     return 0;
 }
