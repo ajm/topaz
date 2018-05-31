@@ -18,10 +18,7 @@ hit_t* hit_alloc() {
     h = (hit_t*) malloc(sizeof(hit_t));
 
     h->db_index = -1;
-    //h->exactmatches = vector_alloc();
-    h->max_score = 0;
 
-    h->is_ready = 0;
     h->is_aligned = 0;
     h->alignment_rank = -1;
     h->rawscore = -1;
@@ -43,13 +40,8 @@ hit_t* hit_alloc() {
 
 void hit_free(hit_t *h) {
     if(h) {
-        //vector_free(h->exactmatches);
         free(h);
     }
-}
-
-int hit_maxscore(hit_t *h) {
-    return h->max_score;
 }
 
 int _compare_exactmatch(void *item1, void *item2) {

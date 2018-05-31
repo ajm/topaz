@@ -53,7 +53,7 @@ static inline char upper_aa(char c) {
             return c - 32;        
 
         default:
-            return 'X';
+            return 'X'; // this will never be used outside of seq.c
     }
 }
 
@@ -69,7 +69,7 @@ static inline char upper_aa_only(char c) {
             return c;
 
         default:
-            return 'X';
+            return 'V'; // internal alphabet used in search.c
     }
 }
 

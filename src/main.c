@@ -351,12 +351,12 @@ int main(int argc, char** argv) {
         fprintf(stderr, "ERROR: you must specify a database prefix\n");
         exit(EXIT_FAILURE);
     }
-
+/*
     if(opt.min_hit_length < 3) {
         fprintf(stderr, "ERROR: minimum common substring length must be at least 3\n");
         exit(EXIT_FAILURE);
     }
-
+*/
     if(opt.number_of_alignments < 0) {
         fprintf(stderr, "ERROR: number of alignments must be positive\n");
         exit(EXIT_FAILURE);

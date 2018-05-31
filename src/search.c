@@ -59,8 +59,10 @@ int sa_gapless(db_t *db, seq_t *q, int qoffset, saidx64_t position, options_t* o
 
     // require seed be at least 3 amino acids long
     // and an exact match
-    if((max_length < 3) || (T[0] != Q[0])) // || (T[1] != Q[1]) || (T[2] != Q[2]))
+    if((max_length < 3) || (T[0] != Q[0])) {// || (T[1] != Q[1]) || (T[2] != Q[2]))
+        *gapless_length = -1;
         return 0;
+    }
 
     for(i = 0; i < max_length; ++i) {
         if(T[i] == '\n') {
@@ -109,8 +111,16 @@ int sa_hsp(db_t *db, seq_t *q, int qoffset, saidx64_t position, options_t* opt, 
     // and an exact match
     //if((max_length_right < 3) || (T[0] != Q[0])) { // || (T[1] != Q[1]) || (T[2] != Q[2])) {
     if(T[0] != Q[0]) {
+        *gapless_length = -1;
         return 0;
     }
+
+    // TEST 3 (14m10s -> 13m7s)
+    max_length_right = min2(max_length_right, 128);
+    // TEST 4 (14m10s -> 13m35s) longer?
+    //max_length_right = min2(max_length_right, 64);
+    // TEST 5 (14m10s -> )
+    //max_length_right = min2(max_length_right, 256);
 
     // go right ----------->
     for(i = 0; i < max_length_right; i++) {
@@ -131,11 +141,21 @@ int sa_hsp(db_t *db, seq_t *q, int qoffset, saidx64_t position, options_t* opt, 
             argmax_len_right = i;
         }
 /*
+        // TEST 2 (14m37s -> 14m10s)
         if(rawscore_right < 1) {
             break;
         }
 */
     }
+/*
+    // TEST 1 (15m32s -> 14m37s)
+    *gapless_score = argmax_score_right;
+    *gapless_length = argmax_len_right;
+
+    return 0;
+*/
+
+    max_length_left = min2(max_length_left, 128);
 
     // <------------ go left
     for(i = 1; i < max_length_left; i++) {

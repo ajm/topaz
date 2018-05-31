@@ -27,11 +27,8 @@ void exactmatch_free(exactmatch_t *e);
 typedef struct {
     // sa search
     uint64_t db_index;  // index of protein in db->index (array of position_t objects)
-    //vector_t *exactmatches;    // list of exact matches
-    int max_score;  // maximum score of LCP regions
 
     // alignment status
-    int is_ready;       // ready to be aligned
     int is_aligned;     // already aligned?
     int alignment_rank;
 

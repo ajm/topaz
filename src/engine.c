@@ -436,7 +436,7 @@ void *pthread_generic_worker(void *arg) {
 //            ProfilerStop();
         }
 
-        _progress(s);
+        //_progress(s);
     }
 
     pthread_mutex_lock(&s->mutex);

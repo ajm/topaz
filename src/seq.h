@@ -33,7 +33,7 @@ typedef struct {
 seq_t* seq_alloc();
 void seq_free(seq_t* s);
 int seq_id(seq_t* s, char* buf, size_t len);
-int seq_seq(seq_t* s, char* buf, size_t len);
+int seq_seq(seq_t* s, char* buf, size_t len, int check);
 int seq_2internal(seq_t* s);
 int seq_len(seq_t* s);
 char* seq_ptr(seq_t* s);

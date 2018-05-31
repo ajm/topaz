@@ -72,7 +72,7 @@ int _create_seq(seq_t* s, char* data, size_t len) {
         return -1;
 
     seq_id(s, data, ind);
-    seq_seq(s, pos + 1, len - ind);
+    seq_seq(s, pos + 1, len - ind, 1);
 
     return 0;
 }

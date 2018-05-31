@@ -159,9 +159,11 @@ void align_using_ssw_profile(s_profile* profile, seq_t* s2, hit_t* hit, options_
 
     for(i = 0; i < seq_len(s2); ++i) {
 #ifdef USELEXICOGRAPHICAL
-        ref[i] = aa_table[(int) upper_aa(seq_char(s2, i))]; //seq_char(s2, i) - 'A';
+        //ref[i] = aa_table[(int) upper_aa(seq_char(s2, i))]; //seq_char(s2, i) - 'A';
+        ref[i] = aa_table[(int) seq_char(s2, i)];
 #else
-        ref[i] = aa_table2[(int) upper_aa(seq_char(s2, i))]; // XXX
+        //ref[i] = aa_table2[(int) upper_aa(seq_char(s2, i))]; // XXX
+        ref[i] = aa_table2[(int) seq_char(s2, i)];
 #endif
     }
 
@@ -182,6 +184,8 @@ void align_using_ssw_profile(s_profile* profile, seq_t* s2, hit_t* hit, options_
                        15);
     
     //ssw_write(result, seq_ptr(s1), seq_ptr(s2), aa_table);
+
+    //printf("alignment done\n");
 
 
     hit->sstart = result->ref_begin1 + 1;
@@ -253,8 +257,9 @@ void align_using_ssw_profile(s_profile* profile, seq_t* s2, hit_t* hit, options_
     free(ref);
     align_destroy(result);
 //    init_destroy(profile);
+//
+    //return hit->rawscore > min_alignment_score;
 }
-
 
 void align_using_ssw(seq_t* s1, seq_t* s2, hit_t* hit, options_t* opt) {
     s_profile* profile;
@@ -373,6 +378,80 @@ void align_using_ssw(seq_t* s1, seq_t* s2, hit_t* hit, options_t* opt) {
     align_destroy(result);
     init_destroy(profile);
 }
+
+
+#define TESTING_TESTINGXXX
+#ifdef TESTING_TESTING
+#include "fasta.h"
+
+int main(int argc, char** argv) {
+    seq_t *s1, *s2;
+    options_t par;
+    hit_t hit;
+    s_profile* prof;
+    int count = 0;
+
+    int s1_start, s2_start, length;
+
+    fasta_t* f;
+
+    f = fasta_alloc("Q8WZ42.fasta");
+    s1 = fasta_next(f, NULL);
+    fasta_free(f);
+
+    seq_2internal(s1);
+
+/*
+    f = fasta_alloc("Q8WZ42.fasta");
+    s2 = fasta_next(f, NULL);
+    fasta_free(f);
+*/
+/*
+    f = fasta_alloc("A0A0C2DC85.fasta");
+    s2 = fasta_next(f, NULL);
+    fasta_free(f);
+*/
+
+    par.gap_open = DEFAULT_GAPOPEN;
+    par.gap_extend = DEFAULT_GAPEXTEND;
+    par.substitution = &BLOSUM62;
+    par.lambda = DEFAULT_LAMBDA;
+    par.k = DEFAULT_K;
+    par.H = DEFAULT_H;
+    par.superfast = 1;
+    par.db_size = 26172347515;
+
+    prof = get_ssw_profile(s1, &par);
+
+    f = fasta_alloc("hlt_test.fa");
+    while((s2 = fasta_next(f, NULL)) != NULL) {
+
+        seq_2internal(s2);
+
+        //lcp(s1, s2, &s1_start, &s2_start, &length);
+
+        //printf("%.*s %d-%d %d-%d %d\n", seq_idlen(s2), seq_idptr(s2), s1_start, s1_start + length, s2_start, s2_start + length, length);
+        //printf("%d\n", length);
+
+        //align_using_ssw(s1, s2, &hit, &par);
+        align_using_ssw_profile(prof, s2, &hit, &par);
+        printf("%.*s %f %f\n", seq_idlen(s2), seq_idptr(s2), hit.evalue, hit.bitscore);
+
+        //printf("%.*s %d %f %f %d-%d %d-%d\n", seq_idlen(s2), seq_idptr(s2), hit.rawscore, hit.bitscore, hit.evalue, hit.qstart, hit.qend, hit.sstart, hit.send);
+        
+        seq_free(s2);
+
+        //if(++count == 200)
+        //    break;
+    }
+
+    seq_free(s1);
+    //seq_free(s2);
+
+    return EXIT_SUCCESS;
+}
+#endif
+
 
 /*
 int main(int argc, char** argv) {

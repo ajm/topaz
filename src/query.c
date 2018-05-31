@@ -3,6 +3,7 @@
 #include <inttypes.h>
 #include <unistd.h>
 #include <math.h>
+#include <sys/time.h>
 
 #include "divsufsort64.h"
 
@@ -18,6 +19,15 @@
 #include "parasail_wrapper.h"
 #include <parasail.h>
 #endif
+
+double get_elapsed_time(struct timeval* start, struct timeval* stop) {
+    double tmp;
+
+    tmp = (stop->tv_sec - start->tv_sec) * 1000.0;
+    tmp += (stop->tv_usec - start->tv_usec) / 1000.0;
+
+    return tmp;
+}
 
 query_t* query_alloc(seq_t* s, db_t* db, options_t* opt) {
     query_t* q;
@@ -74,9 +84,9 @@ int query_done(query_t* q) {
 }
 
 int _bad_prefix(char *s) {
-    //return (s[0] == 'V'); // THIS MEANS 'X' IN THE INTERNAL REPRESENTATION OF AMINOACIDS
+    return (s[0] == 'V'); // THIS MEANS 'X' IN THE INTERNAL REPRESENTATION OF AMINOACIDS
         //|| ((s[0] == s[2]) && ((s[0] == s[1]) || (s[0] == s[4])));
-    return (s[0] == 'V') || ((s[0] == s[2]) && ((s[0] == s[1]) || (s[0] == s[4])));
+    //return (s[0] == 'V') || ((s[0] == s[2]) && ((s[0] == s[1]) || (s[0] == s[4])));
 }
 
 int query_find_suffixes(query_t* q) {
@@ -85,7 +95,9 @@ int query_find_suffixes(query_t* q) {
 
     num_suffixes = seq_len(q->query) - q->opt->min_hit_length;
 
-    //fprintf(stderr, "starting %.*s ...\n", seq_idlen(q->query), seq_idptr(q->query));
+#ifdef CHATTY
+    fprintf(stderr, "starting %.*s ...\n", seq_idlen(q->query), seq_idptr(q->query));
+#endif
 
     for(i = 0; i < num_suffixes; ++i) {
         pos = -1;
@@ -129,40 +141,22 @@ int query_fetch_alignment_batch(query_t* q) {
     int batch_size = q->opt->number_of_lookaheads;
     int counter = 0;
 
-    //fprintf(stderr, "looking for hits to align...\n");
-    //fprintf(stderr, "starting %.*s (iteration %d)...\n", seq_idlen(q->query), seq_idptr(q->query), q->iterations);
+#ifdef CHATTY
+    fprintf(stderr, "looking for hits to align...\n");
+    fprintf(stderr, "starting %.*s (iteration %d)...\n", seq_idlen(q->query), seq_idptr(q->query), q->iterations);
+#endif
 
     while(pqueue_next(q->pq, &SAindex, &Qoffset, &gapless_score, &gapless_length) == 0) {
-/*
-        if(db_index(q->db, q->db->SA[SAindex], &Sindex) < 0) {
-            fprintf(stderr, "Error: internal error in protein lookup\n");
-            _exit(EXIT_FAILURE);
-        }
-*/
-        //Soffset = q->db->SA[SAindex] - q->db->index[Sindex].protein_start;
-
-        //if((h = hitlist_add(q->hl, Sindex, gapless_score, gapless_length, Qoffset)) != NULL) {
         if((h = hitlist_add(q->hl, q->db, SAindex, gapless_score, gapless_length, Qoffset)) != NULL) {
-            // the gapless score alone is sufficient to get a significant E-value
-//            if(gapless_score >= q->min_alignment_score) {
-//                h->is_ready = 1;
-//            }
-
-            //debug
-            h->is_ready = 1;
-
-            //fprintf(stderr, "  added %d\n", counter);
-
-            if(h->is_ready && (++counter == batch_size)) {
+            if(++counter == batch_size) {
                 break;
             }
         }
-        //else {
-        //    fprintf(stderr, "nope\n");
-        //}
     }
 
-    //fprintf(stderr, "got %d possible hits to align...\n", hitlist_len(q->hl));
+#ifdef CHATTY
+    fprintf(stderr, "got %d possible hits to align...\n", hitlist_len(q->hl));
+#endif
 
     // QUERY_DONE here means that we should abandon traversing the SA
     // because the min. length and assorted criteria were exceeded
@@ -171,11 +165,17 @@ int query_fetch_alignment_batch(query_t* q) {
     return 0;
 }
 
+double alignment_time;
+
 int query_perform_alignments(query_t* q) {
     traversal_t* tr;
     hit_t* h;
+    
+    alignment_time = 0.0;
 
-    //fprintf(stderr, "doing alignments (%d)...\n", hitlist_len(q->hl));
+#ifdef CHATTY
+    fprintf(stderr, "doing alignments (%d)...\n", hitlist_len(q->hl));
+#endif
 
 #ifdef USE_PARASAIL
     if(q->use_parasail && q->parasail_profile == NULL) {
@@ -196,17 +196,20 @@ int query_perform_alignments(query_t* q) {
             continue;
         }
 
-        if(h->is_ready) {
-            h->alignment_rank = q->alignment_counter++;
-        }
+        h->alignment_rank = q->alignment_counter++;
+
+        //gettimeofday(&start_time, NULL);
 
 #ifdef USE_PARASAIL
-        if(h->is_ready && perform_alignment_with_profile(h, q->ssw_profile, q->parasail_profile, q->db, q->opt)) {
+        if(perform_alignment_with_profile(h, q->ssw_profile, q->parasail_profile, q->db, q->opt)) {
 #else
-        if(h->is_ready && perform_alignment_with_profile(h, q->ssw_profile, q->db, q->opt)) {
+        if(perform_alignment_with_profile(h, q->ssw_profile, q->db, q->opt)) {
 #endif
             q->hit_counter++;
         }
+
+        //gettimeofday(&end_time, NULL);
+        //alignment_time += get_elapsed_time(&start_time, &end_time);
 /*
         // only align top 1000
         if(q->hit_counter >= 1000) {
@@ -219,7 +222,10 @@ int query_perform_alignments(query_t* q) {
     traversal_end(tr);
     traversal_free(tr);
 
-    //fprintf(stderr, "alignments done (%d)\n", q->hit_counter);
+#ifdef CHATTY
+    fprintf(stderr, "alignments done (%d)\n", q->hit_counter);
+    fprintf(stderr, "alignment time = %f seconds\n", alignment_time / 1000.0);
+#endif
 
     q->state = query_stop_looking(q) ? QUERY_DONE : QUERY_GET_ALIGNMENTS;
 
@@ -232,6 +238,7 @@ int perform_alignment_with_profile(hit_t *h, s_profile *profile, parasail_profil
 int perform_alignment_with_profile(hit_t *h, s_profile *profile, db_t *db, options_t *opt) {
 #endif
     seq_t *s, *tmp;
+    struct timeval start_time, end_time;
 
     s = seq_alloc();
 
@@ -239,6 +246,8 @@ int perform_alignment_with_profile(hit_t *h, s_profile *profile, db_t *db, optio
         fprintf(stderr, "Error: protein at index %" PRIu64 " not found!", h->db_index);
         _exit(EXIT_FAILURE);
     }
+
+    gettimeofday(&start_time, NULL);
 
 #ifdef USE_PARASAIL
     if(parasail_profile) {
@@ -254,6 +263,9 @@ int perform_alignment_with_profile(hit_t *h, s_profile *profile, db_t *db, optio
         abort();
     }
 #endif
+
+    gettimeofday(&end_time, NULL);
+    alignment_time += get_elapsed_time(&start_time, &end_time);
 
     seq_free(s);
 
@@ -271,10 +283,11 @@ int _compare_double(const void* d1, const void* d2) {
 }
 
 int query_stop_looking(query_t *q) {
+    //return 1;
     // ASAP
     //return (q->hit_counter >= q->opt->num_hits) || ((q->opt->max_alignments != 0) && (q->alignment_counter >= q->opt->max_alignments));
     //return (q->hit_counter >= 250) || (q->iterations++ >= 50);
-    return (q->hit_counter >= (q->opt->num_hits / 4)) || (q->iterations++ >= 50);
+    return (q->hit_counter >= (q->opt->num_hits / 4)) || (q->iterations++ >= 10);
     //return 1;
 
     // use up max_alignments

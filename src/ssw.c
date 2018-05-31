@@ -507,7 +507,7 @@ end:
 	bests[0].score = max;
 	bests[0].ref = end_ref;
 	bests[0].read = end_read;
-
+/*
 	bests[1].score = 0;
 	bests[1].ref = 0;
 	bests[1].read = 0;
@@ -526,7 +526,7 @@ end:
 			bests[1].ref = i;
 		}
 	}
-
+*/
 	free(maxColumn);
 	free(end_read_column);
 	return bests;
@@ -789,10 +789,10 @@ s_align* ssw_align (const s_profile* prof,
 	r->read_begin1 = -1;
 	r->cigar = 0;
 	r->cigarLen = 0;
-	if (maskLen < 15) {
+/*	if (maskLen < 15) {
 		fprintf(stderr, "When maskLen < 15, the function ssw_align doesn't return 2nd best alignment information.\n");
 	}
-
+*/
 	// Find the alignment scores and ending positions
 	if (prof->profile_byte) {
 		bests = sw_sse2_byte(ref, 0, refLen, readLen, weight_gapO, weight_gapE, prof->profile_byte, -1, prof->bias, maskLen);
@@ -826,6 +826,8 @@ s_align* ssw_align (const s_profile* prof,
 	free(bests);
 	if (flag == 0 || (flag == 2 && r->score1 < filters)) goto end;
 
+    //fprintf(stderr, "find reverse\n");
+
 	// Find the beginning position of the best alignment.
 	read_reverse = seq_reverse(prof->read, r->read_end1);
 	if (word == 0) {
@@ -841,6 +843,8 @@ s_align* ssw_align (const s_profile* prof,
 	r->read_begin1 = r->read_end1 - bests_reverse[0].read;
 	free(bests_reverse);
 	if ((7&flag) == 0 || ((2&flag) != 0 && r->score1 < filters) || ((4&flag) != 0 && (r->ref_end1 - r->ref_begin1 > filterd || r->read_end1 - r->read_begin1 > filterd))) goto end;
+
+    //fprintf(stderr, "back trace\n");
 
 	// Generate cigar.
 	refLen = r->ref_end1 - r->ref_begin1 + 1;

@@ -241,7 +241,7 @@ seq_t* db_seq(db_t* db, uint64_t i, seq_t **s) {
     pos = db->index + i;
 
     seq_id( seq, db->headers + pos->header_start,  pos->header_len);
-    seq_seq(seq, db->T       + pos->protein_start, pos->protein_len);
+    seq_seq(seq, db->T       + pos->protein_start, pos->protein_len, 1);
 
     return seq;
 }

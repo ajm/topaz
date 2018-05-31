@@ -77,16 +77,25 @@ int seq_id(seq_t* s, char* buf, size_t len) {
     return s->id_len;
 }
 
-int seq_seq(seq_t* s, char* buf, size_t len) {
+int seq_seq(seq_t* s, char* buf, size_t len, int check_upper) {
     int i, j;
     char* sbuf;
 
     buffer_resize(&s->seq_buf, len);
     sbuf = buffer_ptr(&s->seq_buf);
 
-    for(i = 0, j = 0; i < len; ++i) {
-        if(buf[i] != '\n') {
-            sbuf[j++] = upper_aa(buf[i]);
+    if(!check_upper) {
+        for(i = 0, j = 0; i < len; ++i) {
+            if(buf[i] != '\n') {
+                sbuf[j++] = buf[i];
+            }
+        }
+    }
+    else {
+        for(i = 0, j = 0; i < len; ++i) {
+            if(buf[i] != '\n') {
+                sbuf[j++] = upper_aa(buf[i]);
+            }
         }
     }
 
