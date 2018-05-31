@@ -532,7 +532,7 @@ end:
 	return bests;
 }
 
-static cigar* banded_sw (const int8_t* ref,
+static int banded_sw (const int8_t* ref,
 				 const int8_t* read,
 				 int32_t refLen,
 				 int32_t readLen,
@@ -541,19 +541,28 @@ static cigar* banded_sw (const int8_t* ref,
 				 const uint32_t weight_gapE,  /* will be used as - */
 				 int32_t band_width,
 				 const int8_t* mat,	/* pointer to the weight matrix */
-				 int32_t n) {
+				 int32_t n,
+                 int32_t* length,
+                 int32_t* gapopen,
+                 int32_t* mismatch,
+                 double* identity) {
 
-	uint32_t *c = (uint32_t*)malloc(16 * sizeof(uint32_t)), *c1;
-	int32_t i, j, e, f, temp1, temp2, s = 16, s1 = 8, l, max = 0;
+	//uint32_t *c = (uint32_t*)malloc(16 * sizeof(uint32_t)), *c1;
+	int32_t i, j, e, f, temp1, temp2, s = 16, s1 = 8, max = 0, identical = 0; //, l;
 	int64_t s2 = 1024;
 	char op, prev_op;
 	int32_t width, width_d, *h_b, *e_b, *h_c;
 	int8_t *direction, *direction_line;
-	cigar* result = (cigar*)malloc(sizeof(cigar));
+	//cigar* result = (cigar*)malloc(sizeof(cigar));
 	h_b = (int32_t*)malloc(s1 * sizeof(int32_t));
 	e_b = (int32_t*)malloc(s1 * sizeof(int32_t));
 	h_c = (int32_t*)malloc(s1 * sizeof(int32_t));
 	direction = (int8_t*)malloc(s2 * sizeof(int8_t));
+
+    *length = 0;
+    *gapopen = 0;
+    *mismatch = 0;
+    *identity = 0.0;
 
 	do {
 		width = band_width * 2 + 3, width_d = band_width * 2 + 1;
@@ -618,11 +627,13 @@ static cigar* banded_sw (const int8_t* ref,
 	} while (LIKELY(max < score));
 	band_width /= 2;
 
+    fprintf(stderr, "realignment end\n");
+
 	// trace back
 	i = readLen - 1;
 	j = refLen - 1;
 	e = 0;	// Count the number of M, D or I.
-	l = 0;	// record length of current cigar
+	//l = 0;	// record length of current cigar
 	op = prev_op = 'M';
 	temp2 = 2;	// h
 	while (LIKELY(i > 0)) {
@@ -663,10 +674,25 @@ static cigar* banded_sw (const int8_t* ref,
 				free(h_c);
 				free(e_b);
 				free(h_b);
-				free(c);
-				free(result);
+				//free(c);
+				//free(result);
 				return 0;
 		}
+        if (op == 'M') {
+            if(read[i] != ref[j]) {
+                (*mismatch)++;
+            }
+            else {
+                identical++;
+            }
+        }
+        if ((op == 'I' && prev_op != 'I') || (op == 'D' && prev_op != 'D')) {
+            (*gapopen)++;
+        }
+        (*length)++;
+        prev_op = op;
+
+/*
 		if (op == prev_op) ++e;
 		else {
 			++l;
@@ -679,7 +705,11 @@ static cigar* banded_sw (const int8_t* ref,
 			prev_op = op;
 			e = 1;
 		}
+*/
 	}
+
+    *identity = identical / (double) *length;
+/*
 	if (op == 'M') {
 		++l;
 		while (l >= s) {
@@ -698,7 +728,8 @@ static cigar* banded_sw (const int8_t* ref,
 		c[l - 2] = to_cigar_int(e, op);
 		c[l - 1] = to_cigar_int(1, 'M');
 	}
-
+*/
+/*
 	// reverse cigar
 	c1 = (uint32_t*)malloc(l * sizeof(uint32_t));
 	s = 0;
@@ -711,13 +742,17 @@ static cigar* banded_sw (const int8_t* ref,
 	}
 	result->seq = c1;
 	result->length = l;
-
+*/
 	free(direction);
 	free(h_c);
 	free(e_b);
 	free(h_b);
-	free(c);
-	return result;
+//	free(c);
+//	return result;
+
+    fprintf(stderr, "cigar end\n");
+
+    return 1;
 }
 
 static int8_t* seq_reverse(const int8_t* seq, int32_t end)	/* end is 0-based alignment ending position */
@@ -779,10 +814,11 @@ s_align* ssw_align (const s_profile* prof,
 					const int32_t filterd,
 					const int32_t maskLen) {
 
-	alignment_end* bests = 0, *bests_reverse = 0;
-	__m128i* vP = 0;
-	int32_t word = 0, band_width = 0, readLen = prof->readLen;
-	int8_t* read_reverse = 0;
+	alignment_end* bests = 0; //, *bests_reverse = 0;
+	//__m128i* vP = 0;
+	//int32_t word = 0, band_width = 0, 
+    int32_t readLen = prof->readLen;
+	//int8_t* read_reverse = 0;
 	cigar* path;
 	s_align* r = (s_align*)calloc(1, sizeof(s_align));
 	r->ref_begin1 = -1;
@@ -799,7 +835,7 @@ s_align* ssw_align (const s_profile* prof,
 		if (prof->profile_word && bests[0].score == 255) {
 			free(bests);
 			bests = sw_sse2_word(ref, 0, refLen, readLen, weight_gapO, weight_gapE, prof->profile_word, -1, maskLen);
-			word = 1;
+			//word = 1;
 		} else if (bests[0].score == 255) {
 			fprintf(stderr, "Please set 2 to the score_size parameter of the function ssw_init, otherwise the alignment results will be incorrect.\n");
 			free(r);
@@ -807,7 +843,7 @@ s_align* ssw_align (const s_profile* prof,
 		}
 	}else if (prof->profile_word) {
 		bests = sw_sse2_word(ref, 0, refLen, readLen, weight_gapO, weight_gapE, prof->profile_word, -1, maskLen);
-		word = 1;
+		//word = 1;
 	}else {
 		fprintf(stderr, "Please call the function ssw_init before ssw_align.\n");
 		free(r);
@@ -824,36 +860,80 @@ s_align* ssw_align (const s_profile* prof,
 		r->ref_end2 = -1;
 	}
 	free(bests);
-	if (flag == 0 || (flag == 2 && r->score1 < filters)) goto end;
+    return r;
+}
+	//if (flag == 0 || (flag == 2 && r->score1 < filters)) goto end;
+
+int ssw_align_stats (const s_profile* prof,
+                    const int8_t* ref,
+                    int32_t refLen,
+                    const uint8_t weight_gapO,
+                    const uint8_t weight_gapE,
+                    //const uint8_t flag,
+                    //const uint16_t filters,
+                    //const int32_t filterd,
+                    const int32_t maskLen,
+                    int32_t read_end1,
+                    int32_t ref_end1,
+                    uint16_t score1,
+                    int32_t* read_begin1,
+                    int32_t* ref_begin1,
+                    int32_t* length,
+                    int32_t* gapopen,
+                    int32_t* mismatch,
+                    double* identity
+                    ) {
+
+    alignment_end* bests_reverse = 0;
+    int8_t* read_reverse = 0;
+    __m128i* vP = 0;
+    int32_t band_width = 0;
+    int32_t readLen = prof->readLen;
 
     //fprintf(stderr, "find reverse\n");
 
 	// Find the beginning position of the best alignment.
-	read_reverse = seq_reverse(prof->read, r->read_end1);
-	if (word == 0) {
-		vP = qP_byte(read_reverse, prof->mat, r->read_end1 + 1, prof->n, prof->bias);
-		bests_reverse = sw_sse2_byte(ref, 1, r->ref_end1 + 1, r->read_end1 + 1, weight_gapO, weight_gapE, vP, r->score1, prof->bias, maskLen);
+	read_reverse = seq_reverse(prof->read, read_end1);
+	if (score1 < 255) {
+		vP = qP_byte(read_reverse, prof->mat, read_end1 + 1, prof->n, prof->bias);
+		bests_reverse = sw_sse2_byte(ref, 1, ref_end1 + 1, read_end1 + 1, weight_gapO, weight_gapE, vP, score1, prof->bias, maskLen);
 	} else {
-		vP = qP_word(read_reverse, prof->mat, r->read_end1 + 1, prof->n);
-		bests_reverse = sw_sse2_word(ref, 1, r->ref_end1 + 1, r->read_end1 + 1, weight_gapO, weight_gapE, vP, r->score1, maskLen);
+		vP = qP_word(read_reverse, prof->mat, read_end1 + 1, prof->n);
+		bests_reverse = sw_sse2_word(ref, 1, ref_end1 + 1, read_end1 + 1, weight_gapO, weight_gapE, vP, score1, maskLen);
 	}
 	free(vP);
 	free(read_reverse);
-	r->ref_begin1 = bests_reverse[0].ref;
-	r->read_begin1 = r->read_end1 - bests_reverse[0].read;
+
+    fprintf(stderr, "reverse end\n");
+
+	*ref_begin1 = bests_reverse[0].ref;
+	*read_begin1 = read_end1 - bests_reverse[0].read;
 	free(bests_reverse);
-	if ((7&flag) == 0 || ((2&flag) != 0 && r->score1 < filters) || ((4&flag) != 0 && (r->ref_end1 - r->ref_begin1 > filterd || r->read_end1 - r->read_begin1 > filterd))) goto end;
+	//if ((7&flag) == 0 || ((2&flag) != 0 && r->score1 < filters) || ((4&flag) != 0 && (r->ref_end1 - r->ref_begin1 > filterd || r->read_end1 - r->read_begin1 > filterd))) goto end;
 
     //fprintf(stderr, "back trace\n");
 
 	// Generate cigar.
-	refLen = r->ref_end1 - r->ref_begin1 + 1;
-	readLen = r->read_end1 - r->read_begin1 + 1;
+	refLen = ref_end1 - *ref_begin1 + 1;
+	readLen = read_end1 - *read_begin1 + 1;
 	band_width = abs(refLen - readLen) + 1;
-	path = banded_sw(ref + r->ref_begin1, prof->read + r->read_begin1, refLen, readLen, r->score1, weight_gapO, weight_gapE, band_width, prof->mat, prof->n);
+
+	return banded_sw(ref + *ref_begin1, 
+                     prof->read + *read_begin1, 
+                     refLen, 
+                     readLen, 
+                     score1, 
+                     weight_gapO, 
+                     weight_gapE, 
+                     band_width, 
+                     prof->mat, 
+                     prof->n,
+                     length, gapopen, mismatch, identity);
+/*
 	if (path == 0) {
 		free(r);
 		r = NULL;
+        return NULL;
 	}
 	else {
 		r->cigar = path->seq;
@@ -863,6 +943,7 @@ s_align* ssw_align (const s_profile* prof,
 
 end:
 	return r;
+*/
 }
 
 void align_destroy (s_align* a) {

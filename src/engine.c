@@ -157,10 +157,10 @@ void hit_print(hit_t* h, seq_t* q, seq_t *s, int fastmode) {
         h->length,
         h->mismatch,
         h->gapopen,
-        h->qstart,
-        h->qend,
-        h->sstart,
-        h->send,
+        h->qstart + 1,
+        h->qend + 1,
+        h->sstart + 1,
+        h->send + 1,
         h->evalue,
         (int) h->bitscore);
     }

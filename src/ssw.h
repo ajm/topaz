@@ -192,6 +192,25 @@ static inline uint32_t cigar_int_to_len (uint32_t cigar_int)
 {
 	return cigar_int >> BAM_CIGAR_SHIFT;
 }
+
+int ssw_align_stats (const s_profile* prof,
+                    const int8_t* ref,
+                    int32_t refLen,
+                    const uint8_t weight_gapO,
+                    const uint8_t weight_gapE,
+                    const int32_t maskLen,
+                    int32_t read_end1,
+                    int32_t ref_end1,
+                    uint16_t score1,
+                    int32_t* read_begin1,
+                    int32_t* ref_begin1,
+                    int32_t* length,
+                    int32_t* gapopen,
+                    int32_t* mismatch,
+                    double* identity);
+
+
+
 #ifdef __cplusplus
 }
 #endif	// __cplusplus

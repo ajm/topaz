@@ -126,6 +126,8 @@ s_profile* get_ssw_profile(seq_t* s1, options_t* opt) {
                        25, 
                        2);
 
+    fprintf(stderr, "%.*s\n", seq_idlen(s1), seq_idptr(s1));
+
     return profile;
 }
 
@@ -135,15 +137,17 @@ void align_using_ssw_profile(s_profile* profile, seq_t* s2, hit_t* hit, options_
     double correction, corrected_q, corrected_db;
 //    int8_t *num, *ref;
     int8_t *ref;
-    int i, c, identical;
-    int ref_offset, read_offset;
-    uint32_t cigar_int, cigar_len;
-    char cigar_char;
+    int i; //, c, identical;
+    //int ref_offset, read_offset;
+    //uint32_t cigar_int, cigar_len;
+    //char cigar_char;
     int min_alignment_score;
 
     //seq_write(s2, SEQ_ID | SEQ_SEQ, stderr);
     //fprintf(stderr, "\n");
 
+
+    fprintf(stderr, "    %.*s\n", seq_idlen(s2), seq_idptr(s2));
 
     correction = log(opt->k * profile->readLen * opt->db_size) / opt->H;
     corrected_q = fmax(profile->readLen - correction, 1.0); // / opt->k);
@@ -178,7 +182,7 @@ void align_using_ssw_profile(s_profile* profile, seq_t* s2, hit_t* hit, options_
                        seq_len(s2), 
                        opt->gap_open, 
                        opt->gap_extend, 
-                       opt->superfast ? 0 : 2,
+                       0, //opt->superfast ? 0 : 2,
                        min_alignment_score, 
                        0, 
                        15);
@@ -188,19 +192,37 @@ void align_using_ssw_profile(s_profile* profile, seq_t* s2, hit_t* hit, options_
     //printf("alignment done\n");
 
 
-    hit->sstart = result->ref_begin1 + 1;
-    hit->send = result->ref_end1 + 1;
-    hit->qstart = result->read_begin1 + 1;
-    hit->qend = result->read_end1 + 1;
+    hit->sstart = result->ref_begin1;
+    hit->send = result->ref_end1;
+    hit->qstart = result->read_begin1;
+    hit->qend = result->read_end1;
+    hit->rawscore = result->score1;
 
     hit->length = 0;
     hit->gapopen = 0;
     hit->mismatch = 0;
     hit->identity = 0.0;
 
+    hit->bitscore = (opt->lambda * hit->rawscore - log(opt->k)); // / M_LN2;
+    hit->evalue = corrected_q * corrected_db * exp(-hit->bitscore);
+    hit->evalue = hit->evalue > 1.0e-180 ? hit->evalue : 0.0;
+    hit->bitscore /= M_LN2; // nats --> bits
+
+    hit->is_aligned = 1;
+    hit->effective_length = profile->readLen - correction;
+
+
+    ssw_align_stats (profile, ref, seq_len(s2), 
+                    opt->gap_open, opt->gap_extend, 15, 
+                    hit->qend, hit->send, hit->rawscore, 
+                    &(hit->qstart), &(hit->sstart), &(hit->length), 
+                    &(hit->gapopen), &(hit->mismatch), &(hit->identity));
+
+    printf("%.*s %d %f %f %d-%d %d-%d\n", seq_idlen(s2), seq_idptr(s2), hit->rawscore, hit->bitscore, hit->evalue, hit->qstart, hit->qend, hit->sstart, hit->send);
+
     //hit->q_length = seq_len(s2);
     //hit->s_length = profile->readLen;
-
+/*
     identical = 0;
     ref_offset = result->ref_begin1;
     read_offset = result->read_begin1;
@@ -237,22 +259,23 @@ void align_using_ssw_profile(s_profile* profile, seq_t* s2, hit_t* hit, options_
     }
 
     hit->identity = identical / (float)hit->length;
-
+*/
+/*
     hit->rawscore = result->score1;
     hit->bitscore = (opt->lambda * hit->rawscore - log(opt->k)); // / M_LN2;
     hit->evalue = corrected_q * corrected_db * exp(-hit->bitscore);
     hit->evalue = hit->evalue > 1.0e-180 ? hit->evalue : 0.0;
     hit->bitscore /= M_LN2; // nats --> bits
-
+*/
 /*
     if(correction > hit->length) {
         hit->evalue = INFINITY;
     }
 */
-
+/*
     hit->is_aligned = 1;
     hit->effective_length = profile->readLen - correction;
-
+*/
 //    free(num);
     free(ref);
     align_destroy(result);
@@ -395,7 +418,7 @@ int main(int argc, char** argv) {
 
     fasta_t* f;
 
-    f = fasta_alloc("Q8WZ42.fasta");
+    f = fasta_alloc("bad_human.fasta");
     s1 = fasta_next(f, NULL);
     fasta_free(f);
 
@@ -423,7 +446,7 @@ int main(int argc, char** argv) {
 
     prof = get_ssw_profile(s1, &par);
 
-    f = fasta_alloc("hlt_test.fa");
+    f = fasta_alloc("bad.fa");
     while((s2 = fasta_next(f, NULL)) != NULL) {
 
         seq_2internal(s2);
@@ -435,9 +458,9 @@ int main(int argc, char** argv) {
 
         //align_using_ssw(s1, s2, &hit, &par);
         align_using_ssw_profile(prof, s2, &hit, &par);
-        printf("%.*s %f %f\n", seq_idlen(s2), seq_idptr(s2), hit.evalue, hit.bitscore);
+        //printf("%.*s %f %f\n", seq_idlen(s2), seq_idptr(s2), hit.evalue, hit.bitscore);
 
-        //printf("%.*s %d %f %f %d-%d %d-%d\n", seq_idlen(s2), seq_idptr(s2), hit.rawscore, hit.bitscore, hit.evalue, hit.qstart, hit.qend, hit.sstart, hit.send);
+        printf("%.*s %d %f %f %d-%d %d-%d\n", seq_idlen(s2), seq_idptr(s2), hit.rawscore, hit.bitscore, hit.evalue, hit.qstart, hit.qend, hit.sstart, hit.send);
         
         seq_free(s2);
 
