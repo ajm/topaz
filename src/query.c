@@ -14,6 +14,7 @@
 #include "search.h"
 #include "ssw_wrapper.h"
 #include "ssw.h"
+#include "utils.h"
 
 #ifdef USE_PARASAIL
 #include "parasail_wrapper.h"
@@ -160,7 +161,13 @@ int query_fetch_alignment_batch(query_t* q) {
 
     // QUERY_DONE here means that we should abandon traversing the SA
     // because the min. length and assorted criteria were exceeded
-    q->state = (counter == 0) ? QUERY_DONE : QUERY_DO_ALIGNMENTS;
+    if(counter == 0) {
+        q->state = q->opt->superfast ? QUERY_DONE : QUERY_DO_STATISTICS;
+    }
+    else {
+        q->state = QUERY_DO_ALIGNMENTS;
+    }
+    //q->state = (counter == 0) ? QUERY_DONE : QUERY_DO_ALIGNMENTS;
 
     return 0;
 }
@@ -227,8 +234,66 @@ int query_perform_alignments(query_t* q) {
     fprintf(stderr, "alignment time = %f seconds\n", alignment_time / 1000.0);
 #endif
 
-    q->state = query_stop_looking(q) ? QUERY_DONE : QUERY_GET_ALIGNMENTS;
+    if(query_stop_looking(q)) {
+        q->state = q->opt->superfast ? QUERY_DONE : QUERY_DO_STATISTICS;
+    }
+    else {
+        q->state = QUERY_GET_ALIGNMENTS;
+    }
 
+    //q->state = query_stop_looking(q) ? QUERY_DONE : QUERY_GET_ALIGNMENTS;
+
+    return 0;
+}
+
+int query_perform_statistics(query_t* q) {
+    traversal_t* t;
+    hit_t* h;
+    hit_t** all_hits;
+    int i = 0;
+    size_t len = hitlist_len(q->hl);
+    size_t aligned_hits = 0;
+    seq_t *tmp, *s;
+    struct timeval start_time, end_time;
+
+    all_hits = malloc(sizeof(hit_t*) * len);
+    s = seq_alloc();
+
+    t = hitlist_traversal(q->hl);
+    traversal_start(t);
+
+    while((h = traversal_next(t)) != NULL) {
+        if(h->is_aligned) {
+            all_hits[aligned_hits++] = h;
+        }
+    }
+
+    qsort(all_hits, aligned_hits, sizeof(hit_t*), compare_bitscore);
+
+    aligned_hits = aligned_hits < q->opt->num_hits ? aligned_hits : q->opt->num_hits;
+
+    for(i = 0; i < aligned_hits; ++i) {
+        h = all_hits[i];
+
+        if(h->evalue <= q->opt->evalue) {
+            if((tmp = db_seq(q->db, h->db_index, &s)) == NULL) {
+                fprintf(stderr, "Error: protein at index %" PRIu64 " not found!", h->db_index);
+                exit(EXIT_FAILURE);
+            }
+            
+            gettimeofday(&start_time, NULL);
+            stats_using_ssw_profile(q->ssw_profile, tmp, h, q->opt);
+            gettimeofday(&end_time, NULL);
+
+            h->time_stats = get_elapsed_time(&start_time, &end_time);
+        }
+    }
+
+    seq_free(s);
+    traversal_free(t);
+    free(all_hits);
+
+    q->state = QUERY_DONE;
     return 0;
 }
 
@@ -265,7 +330,8 @@ int perform_alignment_with_profile(hit_t *h, s_profile *profile, db_t *db, optio
 #endif
 
     gettimeofday(&end_time, NULL);
-    alignment_time += get_elapsed_time(&start_time, &end_time);
+    //alignment_time += get_elapsed_time(&start_time, &end_time);
+    h->time_align = get_elapsed_time(&start_time, &end_time);;
 
     seq_free(s);
 
@@ -283,57 +349,6 @@ int _compare_double(const void* d1, const void* d2) {
 }
 
 int query_stop_looking(query_t *q) {
-    //return 1;
-    // ASAP
-    //return (q->hit_counter >= q->opt->num_hits) || ((q->opt->max_alignments != 0) && (q->alignment_counter >= q->opt->max_alignments));
-    //return (q->hit_counter >= 250) || (q->iterations++ >= 50);
     return (q->hit_counter >= (q->opt->num_hits / 4)) || (q->iterations++ >= 10);
-    //return 1;
-
-    // use up max_alignments
-    //return (q->opt->max_alignments != 0) && (q->alignment_counter >= q->opt->max_alignments);
-/*
-    // be cleverer, or some approximation thereof...
-    traversal_t* tr;
-    hit_t* h;
-    double* all_hits;
-    int index = 0;
-    double mean = 0;
-    double median = 0;
-
-    // if we have not got enough hits, just check whether we have exceeded max. alignments
-    if(q->hit_counter < q->opt->num_hits) {
-        return (q->opt->max_alignments != 0) && (q->alignment_counter >= q->opt->max_alignments);
-    }
-
-    // fail early if we already have enough hits and 
-    // this batch did not improve the kth bitscore in the hitlist
-    if(highest_bitscore < q->lowest_bitscore) {
-        return 1;
-    }
-
-    // kth bitscore is improved, so update the lowest_bitscore field in the query_t object
-    tr = hitlist_traversal(q->hl);
-    all_hits = malloc(hitlist_len(q->hl) * sizeof(double));
-
-    while((h = (hit_t*) traversal_next(tr)) != NULL) {
-        all_hits[index++] = h->bitscore;
-        mean += h->bitscore;
-    }
-
-    qsort(all_hits, index, sizeof(double), _compare_double);
-
-    q->lowest_bitscore = all_hits[q->opt->num_hits];
-
-    mean /= index;
-    median = all_hits[index / 2];
-
-    q->lowest_bitscore = median;
-
-    traversal_free(tr);
-    free(all_hits);
-
-    return 0;
-*/
 }
 

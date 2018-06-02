@@ -133,24 +133,10 @@ void _progress(search_t* s) {
     pthread_mutex_unlock(&s->mutex);
 }
 
-int _compare_bitscore(const void *l, const void *r) {
-    double lbs = (*(hit_t**) l)->bitscore;
-    double rbs = (*(hit_t**) r)->bitscore;
-
-    if(lbs == rbs) {
-        return 0;
-    }
-    else if(lbs < rbs) {
-        return 1;
-    }
-
-    return -1;
-}
-
 void hit_print(hit_t* h, seq_t* q, seq_t *s, int fastmode) {
 
     if(!fastmode) {
-        printf("%.*s\t%.*s\t%.2f\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%.3e\t%d\n",
+        printf("%.*s\t%.*s\t%.2f\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%.3e\t%d\t%.3f\t%.3f\n",
         seq_idlen(q), seq_idptr(q), 
         seq_idlen(s), seq_idptr(s),
         h->identity * 100,
@@ -162,7 +148,8 @@ void hit_print(hit_t* h, seq_t* q, seq_t *s, int fastmode) {
         h->sstart + 1,
         h->send + 1,
         h->evalue,
-        (int) h->bitscore);
+        (int) h->bitscore,
+        h->time_align, h->time_stats);
     }
     else {
         printf("%.*s\t%.*s\t%.3e\t%d\n",
@@ -223,7 +210,7 @@ void output_top_hits(hitlist_t* hl, seq_t* query, db_t* db, options_t* opt) {
 
     //fprintf(stderr, "[HITLIST] %zu elements, %zu aligned\n", len, aligned_hits);
 
-    qsort(all_hits, aligned_hits, sizeof(hit_t*), _compare_bitscore);
+    qsort(all_hits, aligned_hits, sizeof(hit_t*), compare_bitscore);
 
     aligned_hits = aligned_hits < opt->num_hits ? aligned_hits : opt->num_hits;
 
@@ -370,6 +357,13 @@ void _full_search(search_t* s, query_t* query, double* suffix_time, double* alig
                 *alignment_time += elapsed_time(&start_time, &end_time);
                 break;
 
+            case QUERY_DO_STATISTICS :
+                gettimeofday(&start_time, NULL);
+                query_perform_statistics(query);
+                gettimeofday(&end_time, NULL);
+                *alignment_time += elapsed_time(&start_time, &end_time);
+                break;
+
             default :
                 break;
         }
@@ -488,7 +482,10 @@ int search_pthread(search_t *s) {
     int i;
     struct timeval end_time;
 
-    printf("qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore alignrank gaplessscore gaplesslength qlength slength suffixcounter offset multiple\n");
+    if(s->opt->superfast)
+        printf("qseqid sseqid evalue bitscore\n");
+    else 
+        printf("qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore\n");
 
     threads = (pthread_t*) malloc(sizeof(pthread_t) * s->opt->num_threads);
 

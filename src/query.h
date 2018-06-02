@@ -17,6 +17,7 @@ typedef enum {
     QUERY_FIND_SUFFIXES,
     QUERY_GET_ALIGNMENTS,
     QUERY_DO_ALIGNMENTS,
+    QUERY_DO_STATISTICS,
     QUERY_DONE
 } query_state_t;
 
@@ -49,6 +50,7 @@ int query_done(query_t* q);
 int query_find_suffixes(query_t* q);
 int query_fetch_alignment_batch(query_t* q);
 int query_perform_alignments(query_t* q);
+int query_perform_statistics(query_t* q);
 int query_stop_looking(query_t* q);
 
 #ifdef USE_PARASAIL

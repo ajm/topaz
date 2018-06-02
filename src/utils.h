@@ -10,6 +10,7 @@ char* mk_fname(char *prefix, char *ext);
 FILE* fopen_pf(char* prefix, char* ext);
 //void rtrim(char* s, ssize_t* len);
 uint64_t strncount(char *s, char c, size_t n);
+int compare_bitscore(const void *l, const void *r);
 
 #endif
 

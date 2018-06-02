@@ -627,8 +627,6 @@ static int banded_sw (const int8_t* ref,
 	} while (LIKELY(max < score));
 	band_width /= 2;
 
-    fprintf(stderr, "realignment end\n");
-
 	// trace back
 	i = readLen - 1;
 	j = refLen - 1;
@@ -749,8 +747,6 @@ static int banded_sw (const int8_t* ref,
 	free(h_b);
 //	free(c);
 //	return result;
-
-    fprintf(stderr, "cigar end\n");
 
     return 1;
 }
@@ -890,11 +886,9 @@ int ssw_align_stats (const s_profile* prof,
     int32_t band_width = 0;
     int32_t readLen = prof->readLen;
 
-    //fprintf(stderr, "find reverse\n");
-
 	// Find the beginning position of the best alignment.
 	read_reverse = seq_reverse(prof->read, read_end1);
-	if (score1 < 255) {
+	if ((prof->bias + score1) < 255) {
 		vP = qP_byte(read_reverse, prof->mat, read_end1 + 1, prof->n, prof->bias);
 		bests_reverse = sw_sse2_byte(ref, 1, ref_end1 + 1, read_end1 + 1, weight_gapO, weight_gapE, vP, score1, prof->bias, maskLen);
 	} else {
@@ -904,14 +898,10 @@ int ssw_align_stats (const s_profile* prof,
 	free(vP);
 	free(read_reverse);
 
-    fprintf(stderr, "reverse end\n");
-
 	*ref_begin1 = bests_reverse[0].ref;
 	*read_begin1 = read_end1 - bests_reverse[0].read;
 	free(bests_reverse);
 	//if ((7&flag) == 0 || ((2&flag) != 0 && r->score1 < filters) || ((4&flag) != 0 && (r->ref_end1 - r->ref_begin1 > filterd || r->read_end1 - r->read_begin1 > filterd))) goto end;
-
-    //fprintf(stderr, "back trace\n");
 
 	// Generate cigar.
 	refLen = ref_end1 - *ref_begin1 + 1;

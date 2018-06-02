@@ -52,6 +52,9 @@ typedef struct {
     int suffix_offset;
     int suffix_multiple;
 
+    double time_stats;
+    double time_align;
+
     rbnode_t *priority_node;
 
 } hit_t;

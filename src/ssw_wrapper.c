@@ -126,9 +126,26 @@ s_profile* get_ssw_profile(seq_t* s1, options_t* opt) {
                        25, 
                        2);
 
-    fprintf(stderr, "%.*s\n", seq_idlen(s1), seq_idptr(s1));
-
     return profile;
+}
+
+void stats_using_ssw_profile(s_profile* profile, seq_t* s2, hit_t* hit, options_t* opt) {
+    int i;
+    int8_t *ref = (int8_t*) malloc(seq_len(s2));
+
+    for(i = 0; i < seq_len(s2); ++i) {
+#ifdef USELEXICOGRAPHICAL
+        ref[i] = aa_table[(int) seq_char(s2, i)];
+#else
+        ref[i] = aa_table2[(int) seq_char(s2, i)];
+#endif
+    }
+
+    ssw_align_stats (profile, ref, seq_len(s2), 
+                    opt->gap_open, opt->gap_extend, 15, 
+                    hit->qend, hit->send, hit->rawscore, 
+                    &(hit->qstart), &(hit->sstart), &(hit->length), 
+                    &(hit->gapopen), &(hit->mismatch), &(hit->identity));
 }
 
 void align_using_ssw_profile(s_profile* profile, seq_t* s2, hit_t* hit, options_t* opt) {
@@ -146,8 +163,6 @@ void align_using_ssw_profile(s_profile* profile, seq_t* s2, hit_t* hit, options_
     //seq_write(s2, SEQ_ID | SEQ_SEQ, stderr);
     //fprintf(stderr, "\n");
 
-
-    fprintf(stderr, "    %.*s\n", seq_idlen(s2), seq_idptr(s2));
 
     correction = log(opt->k * profile->readLen * opt->db_size) / opt->H;
     corrected_q = fmax(profile->readLen - correction, 1.0); // / opt->k);
@@ -211,14 +226,13 @@ void align_using_ssw_profile(s_profile* profile, seq_t* s2, hit_t* hit, options_
     hit->is_aligned = 1;
     hit->effective_length = profile->readLen - correction;
 
-
+/*
     ssw_align_stats (profile, ref, seq_len(s2), 
                     opt->gap_open, opt->gap_extend, 15, 
                     hit->qend, hit->send, hit->rawscore, 
                     &(hit->qstart), &(hit->sstart), &(hit->length), 
                     &(hit->gapopen), &(hit->mismatch), &(hit->identity));
-
-    printf("%.*s %d %f %f %d-%d %d-%d\n", seq_idlen(s2), seq_idptr(s2), hit->rawscore, hit->bitscore, hit->evalue, hit->qstart, hit->qend, hit->sstart, hit->send);
+*/
 
     //hit->q_length = seq_len(s2);
     //hit->s_length = profile->readLen;

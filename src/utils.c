@@ -11,6 +11,8 @@
 #include <errno.h>
 #include <stdint.h>
 
+#include "hit.h"
+
 
 void *fmmap_ro(char *fname, uint64_t* size) {
     int fd;
@@ -133,5 +135,19 @@ uint64_t strncount(char *s, char c, size_t n) {
     }
 
     return counter;
+}
+
+int compare_bitscore(const void *l, const void *r) {
+    double lbs = (*(hit_t**) l)->bitscore;
+    double rbs = (*(hit_t**) r)->bitscore;
+
+    if(lbs == rbs) {
+        return 0;
+    }
+    else if(lbs < rbs) {
+        return 1;
+    }
+
+    return -1;
 }
 
