@@ -73,7 +73,7 @@ typedef struct {
 
 } hitlist_t;
 
-hitlist_t* hitlist_alloc(options_t *opt);
+hitlist_t* hitlist_alloc(options_t *opt, int query_length);
 void hitlist_free(hitlist_t* hl);
 //void hitlist_prune(hitlist_t* hl, int min_votes, int max_hits);
 //void hitlist_increment(hitlist_t* hl, uint64_t db_index);

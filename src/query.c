@@ -15,6 +15,7 @@
 #include "ssw_wrapper.h"
 #include "ssw.h"
 #include "utils.h"
+#include "lexicographical.h"
 
 #ifdef USE_PARASAIL
 #include "parasail_wrapper.h"
@@ -40,7 +41,7 @@ query_t* query_alloc(seq_t* s, db_t* db, options_t* opt) {
     q->db = db;
     q->opt = opt;
     q->pq = pqueue_alloc(db, opt);
-    q->hl = hitlist_alloc(opt);
+    q->hl = hitlist_alloc(opt, seq_len(s));
     q->ssw_profile = NULL;
     q->hit_counter = 0;
     q->alignment_counter = 0;
@@ -85,7 +86,7 @@ int query_done(query_t* q) {
 }
 
 int _bad_prefix(char *s) {
-    return (s[0] == 'V'); // THIS MEANS 'X' IN THE INTERNAL REPRESENTATION OF AMINOACIDS
+    return (upper_aa_only(s[0]) == 'V'); // THIS MEANS 'X' IN THE INTERNAL REPRESENTATION OF AMINOACIDS
         //|| ((s[0] == s[2]) && ((s[0] == s[1]) || (s[0] == s[4])));
     //return (s[0] == 'V') || ((s[0] == s[2]) && ((s[0] == s[1]) || (s[0] == s[4])));
 }
@@ -349,6 +350,7 @@ int _compare_double(const void* d1, const void* d2) {
 }
 
 int query_stop_looking(query_t *q) {
+    return 1;
     return (q->hit_counter >= (q->opt->num_hits / 4)) || (q->iterations++ >= 10);
 }
 

@@ -476,6 +476,7 @@ end:
 
 			if (LIKELY(temp > max)) {
 				max = temp;
+                if (max >= 32767) break;
 				end_ref = i;
 				for (j = 0; LIKELY(j < segLen); ++j) pvHmax[j] = pvHStore[j];
 			}
@@ -504,7 +505,8 @@ end:
 
 	/* Find the most possible 2nd best alignment. */
 	alignment_end* bests = (alignment_end*) calloc(2, sizeof(alignment_end));
-	bests[0].score = max;
+	//bests[0].score = max;
+    bests[0].score = max >= 32767 ? 32767 : max;
 	bests[0].ref = end_ref;
 	bests[0].read = end_read;
 /*
@@ -831,6 +833,11 @@ s_align* ssw_align (const s_profile* prof,
 		if (prof->profile_word && bests[0].score == 255) {
 			free(bests);
 			bests = sw_sse2_word(ref, 0, refLen, readLen, weight_gapO, weight_gapE, prof->profile_word, -1, maskLen);
+            if(bests[0].score == 32767) {
+                //fprintf(stderr, "Error: raw alignment score too high\n");
+                free(r);
+                return NULL;
+            }
 			//word = 1;
 		} else if (bests[0].score == 255) {
 			fprintf(stderr, "Please set 2 to the score_size parameter of the function ssw_init, otherwise the alignment results will be incorrect.\n");
@@ -888,6 +895,7 @@ int ssw_align_stats (const s_profile* prof,
 
 	// Find the beginning position of the best alignment.
 	read_reverse = seq_reverse(prof->read, read_end1);
+
 	if ((prof->bias + score1) < 255) {
 		vP = qP_byte(read_reverse, prof->mat, read_end1 + 1, prof->n, prof->bias);
 		bests_reverse = sw_sse2_byte(ref, 1, ref_end1 + 1, read_end1 + 1, weight_gapO, weight_gapE, vP, score1, prof->bias, maskLen);
@@ -907,6 +915,9 @@ int ssw_align_stats (const s_profile* prof,
 	refLen = ref_end1 - *ref_begin1 + 1;
 	readLen = read_end1 - *read_begin1 + 1;
 	band_width = abs(refLen - readLen) + 1;
+
+    //fprintf(stderr, "%d %d-%d %d-%d\n", score1, ref_begin1, ref_end1, read_begin1, read_end1);
+    //return 0;
 
 	return banded_sw(ref + *ref_begin1, 
                      prof->read + *read_begin1, 

@@ -131,7 +131,13 @@ s_profile* get_ssw_profile(seq_t* s1, options_t* opt) {
 
 void stats_using_ssw_profile(s_profile* profile, seq_t* s2, hit_t* hit, options_t* opt) {
     int i;
-    int8_t *ref = (int8_t*) malloc(seq_len(s2));
+    int8_t *ref;
+    
+    if(hit->rawscore == 32767) {
+        return;
+    } 
+
+    ref = (int8_t*) malloc(seq_len(s2));
 
     for(i = 0; i < seq_len(s2); ++i) {
 #ifdef USELEXICOGRAPHICAL
@@ -162,6 +168,12 @@ void align_using_ssw_profile(s_profile* profile, seq_t* s2, hit_t* hit, options_
 
     //seq_write(s2, SEQ_ID | SEQ_SEQ, stderr);
     //fprintf(stderr, "\n");
+    if(hit->gapless_score < 40) {
+        hit->bitscore = 0;
+        hit->evalue = 1000;
+        hit->is_aligned = 1;
+        return;
+    }
 
 
     correction = log(opt->k * profile->readLen * opt->db_size) / opt->H;
@@ -169,6 +181,8 @@ void align_using_ssw_profile(s_profile* profile, seq_t* s2, hit_t* hit, options_
     corrected_db = fmax(opt->db_size - (correction * opt->db_proteins), 1.0);
 
     min_alignment_score = (int) floor((-log(opt->evalue / corrected_q / corrected_db) + log(opt->k)) / opt->lambda);
+
+    //fprintf(stderr, "min = %d\n", min_alignment_score);
 
 //    num = (int8_t*) malloc(seq_len(s1));
     ref = (int8_t*) malloc(seq_len(s2));
@@ -205,7 +219,11 @@ void align_using_ssw_profile(s_profile* profile, seq_t* s2, hit_t* hit, options_
     //ssw_write(result, seq_ptr(s1), seq_ptr(s2), aa_table);
 
     //printf("alignment done\n");
-
+    if(!result) {
+        free(ref);
+        hit->rawscore = 32767;
+        return;
+    }
 
     hit->sstart = result->ref_begin1;
     hit->send = result->ref_end1;
@@ -432,7 +450,7 @@ int main(int argc, char** argv) {
 
     fasta_t* f;
 
-    f = fasta_alloc("bad_human.fasta");
+    f = fasta_alloc("bad_ff1.fasta");
     s1 = fasta_next(f, NULL);
     fasta_free(f);
 
@@ -460,7 +478,7 @@ int main(int argc, char** argv) {
 
     prof = get_ssw_profile(s1, &par);
 
-    f = fasta_alloc("bad.fa");
+    f = fasta_alloc("bad_ff2.fasta");
     while((s2 = fasta_next(f, NULL)) != NULL) {
 
         seq_2internal(s2);
@@ -472,6 +490,7 @@ int main(int argc, char** argv) {
 
         //align_using_ssw(s1, s2, &hit, &par);
         align_using_ssw_profile(prof, s2, &hit, &par);
+            stats_using_ssw_profile(prof, s2, &hit, &par);
         //printf("%.*s %f %f\n", seq_idlen(s2), seq_idptr(s2), hit.evalue, hit.bitscore);
 
         printf("%.*s %d %f %f %d-%d %d-%d\n", seq_idlen(s2), seq_idptr(s2), hit.rawscore, hit.bitscore, hit.evalue, hit.qstart, hit.qend, hit.sstart, hit.send);

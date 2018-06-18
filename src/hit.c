@@ -96,13 +96,17 @@ void _hit_deallocator(void *payload) {
     hit_free((hit_t*) payload);
 }
 
-hitlist_t* hitlist_alloc(options_t *opt) {
+hitlist_t* hitlist_alloc(options_t *opt, int query_length) {
     hitlist_t* h;
 
     h = (hitlist_t*) malloc(sizeof(hitlist_t));
     h->id_tree = rb_alloc();
     h->priority_tree = rb_alloc();
     h->opt = opt;
+    h->max_length = opt->number_of_alignments;
+    if(query_length > 3000) {
+        h->max_length = 1.5 * opt->num_hits;
+    }
 
     return h;
 }
@@ -121,7 +125,7 @@ void hitlist_free(hitlist_t *hl) {
 
 hit_t* hitlist_add(hitlist_t* hl, db_t* db, saidx64_t SAindex, int gapless_score, int gapless_length, saidx64_t suffix_offset) {
     hit_t *h, *tmp;
-    int max_hitlist_length = hl->opt->number_of_alignments;
+    int max_hitlist_length = hl->max_length; //hl->opt->number_of_alignments;
     saidx64_t index;
 
     if(rb_size(hl->id_tree) >= max_hitlist_length) {    // are we at capacity?

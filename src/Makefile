@@ -5,7 +5,7 @@ CC=gcc
 #-DWITHGPERFTOOLS
 #INCLUDES=-I. -I./seg -I/usr/local/include
 #LDFLAGS=-lm -L/usr/local/lib -fopenmp -ltcmalloc -L/home/ajmedlar/local/lib #-lprofiler
-CFLAGS=-Wall -Wno-unused-variable -O3 -c -DUSE_LCPX -g -fopenmp
+CFLAGS=-Wall -Wno-unused-variable -O3 -c -DUSE_LCPX -g -fopenmp #-DUSELEXICOGRAPHICAL
 INCLUDES=-I. -I./seg
 LDFLAGS=-lm -fopenmp
 SOURCES=main.c \

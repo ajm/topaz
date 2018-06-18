@@ -136,7 +136,7 @@ void _progress(search_t* s) {
 void hit_print(hit_t* h, seq_t* q, seq_t *s, int fastmode) {
 
     if(!fastmode) {
-        printf("%.*s\t%.*s\t%.2f\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%.3e\t%d\t%.3f\t%.3f\n",
+        printf("%.*s\t%.*s\t%.2f\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%.3e\t%d\n",
         seq_idlen(q), seq_idptr(q), 
         seq_idlen(s), seq_idptr(s),
         h->identity * 100,
@@ -148,8 +148,8 @@ void hit_print(hit_t* h, seq_t* q, seq_t *s, int fastmode) {
         h->sstart + 1,
         h->send + 1,
         h->evalue,
-        (int) h->bitscore,
-        h->time_align, h->time_stats);
+        (int) h->bitscore); //,
+        //h->time_align, h->time_stats);
     }
     else {
         printf("%.*s\t%.*s\t%.3e\t%d\n",
@@ -235,9 +235,11 @@ void output_top_hits(hitlist_t* hl, seq_t* query, db_t* db, options_t* opt) {
     free(all_hits);
 
 #ifndef NO_OUTPUT
+    /*
     if(count == 0) {
         fprintf(stderr, "Warning: %.*s generated zero hits!\n", seq_idlen(query), seq_idptr(query));
     }
+    */
 #endif
 }
 
