@@ -74,6 +74,9 @@ search_t* search_alloc(char *queries, char *prefix, options_t *opt) {
     s->total_suffix_time = 0.0;
     s->total_alignment_time = 0.0;
 
+    s->number_of_nonzero_hit_queries = 0;
+    s->number_of_hits_total = 0;
+
 
     if((error_num = pthread_mutex_init(&s->mutex, NULL)) != 0) {
         fprintf(stderr, "Error: pthread_mutex_init failed: %s\n", strerror(error_num));
@@ -187,7 +190,7 @@ void hit_print(hit_t* h, seq_t* q, seq_t *s, int fastmode) {
 #endif
 }
 
-void output_top_hits(hitlist_t* hl, seq_t* query, db_t* db, options_t* opt) {
+int output_top_hits(hitlist_t* hl, seq_t* query, db_t* db, options_t* opt) {
     traversal_t* t;
     hit_t* h;
     hit_t** all_hits;
@@ -241,6 +244,7 @@ void output_top_hits(hitlist_t* hl, seq_t* query, db_t* db, options_t* opt) {
     }
     */
 #endif
+    return count;
 }
 
 void read_data(search_t* s) {
@@ -295,13 +299,19 @@ int _incomplete(search_t* s) {
     return !(s->queries_done && (s->queries_added == s->queries_completed));
 }
 
-void _increment_complete(search_t* s) {
+void _increment_complete(search_t* s, int alignments) {
     pthread_mutex_lock(&s->mutex);
     s->queries_completed++;
+    if(alignments != 0) {
+        s->number_of_nonzero_hit_queries++;
+        s->number_of_hits_total += alignments;
+    }
     pthread_mutex_unlock(&s->mutex);
 }
 
 void _search(search_t* s, query_t* query) {
+    int count = 0;
+
     if(query->state == QUERY_FIND_SUFFIXES) {
         query_find_suffixes(query);
     }
@@ -313,13 +323,15 @@ void _search(search_t* s, query_t* query) {
         wqueue2_push(s->q_alignment, query);
     }
     else {
-        output_top_hits(query->hl, query->query, query->db, query->opt);
+        count = output_top_hits(query->hl, query->query, query->db, query->opt);
         query_free(query);
-        _increment_complete(s);
+        _increment_complete(s, count);
     }
 }
 
 void _alignment(search_t* s, query_t* query) {
+    int count = 0;
+
     query_perform_alignments(query);
 
     if(! query_done(query)) {
@@ -327,14 +339,15 @@ void _alignment(search_t* s, query_t* query) {
         wqueue2_push(s->q_search, query);
     }
     else {
-        output_top_hits(query->hl, query->query, query->db, query->opt);
+        count = output_top_hits(query->hl, query->query, query->db, query->opt);
         query_free(query);
-        _increment_complete(s);
+        _increment_complete(s, count);
     }
 }
 
 void _full_search(search_t* s, query_t* query, double* suffix_time, double* alignment_time) {
     struct timeval start_time, end_time;
+    int count = 0;
 
     while(query->state != QUERY_DONE) {
         switch(query->state) {
@@ -371,9 +384,9 @@ void _full_search(search_t* s, query_t* query, double* suffix_time, double* alig
         }
     }
 
-    output_top_hits(query->hl, query->query, query->db, query->opt);
+    count = output_top_hits(query->hl, query->query, query->db, query->opt);
     query_free(query);
-    _increment_complete(s);
+    _increment_complete(s, count);
 }
 
 void *pthread_suffix_worker(void *arg) {
@@ -538,6 +551,8 @@ int search_pthread(search_t *s) {
             s->total_alignment_time, 
             elapsed_time(&s->start_time, &end_time));
 */
+    fprintf(stderr, "output %"PRIu64" hits for %"PRIu32" queries\n", s->number_of_hits_total, s->number_of_nonzero_hit_queries);
+    fprintf(stderr, "elapsed time: %.1f seconds\n", elapsed_time(&s->start_time, &end_time) / 1000);
     fprintf(stderr, "done!\n");
 
     return 0;

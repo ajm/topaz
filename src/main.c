@@ -27,6 +27,7 @@ void usage() {
 "\t-A INT, --alignments INT (default = %d)\n"
 "\t-l INT, --minlength INT (minimum length common substring, default = %d)\n"
 "\t-s INT, --minscore INT (minimum raw score of common substring, default = %d)\n"
+"\t-F, --fast (parameter defaults for 'fast' mode: seeds = %d, alignments = %d)"
 "\nAlignment:\n"
 "\t-o INT, --gapopen INT (default = %d)\n"
 "\t-e INT, --gapext INT (default = %d)\n"
@@ -35,10 +36,11 @@ void usage() {
 "\t-k FLOAT, --kappa FLOAT (E-value parameter, replace with lookup table like BLAST)\n"
 "\t-g FLOAT, --entropy FLOAT (E-value parameter, replace with lookup table like BLAST)\n"
 "\t-B, --blasttab (output BLAST outfmt 6 tabular format at the expense of speed)\n"
-"\t-M, --noseg (do not mask sequences with SEG)\n"
+"\t-M, --noseg (do not mask sequences with SEG during seeding)\n"
 "\n", PROGRAM, DEFAULT_THREADS,
       DEFAULT_HITS, DEFAULT_EVALUE,
-      DEFAULT_LOOKAHEADS, DEFAULT_ALIGNMENTS, DEFAULT_MINLENGTH, DEFAULT_MINSCORE,
+      DEFAULT_SEEDS, DEFAULT_ALIGNMENTS, DEFAULT_MINLENGTH, DEFAULT_MINSCORE,
+      FAST_SEEDS, FAST_ALIGNMENTS,
       DEFAULT_GAPOPEN, DEFAULT_GAPEXTEND, DEFAULT_SUBSTITUTION);
 }
 
@@ -89,7 +91,6 @@ void str2sm(char *name, options_t *opt) {
 void options_defaults(options_t *opt) {
     opt->num_threads = DEFAULT_THREADS;
     opt->num_hits = DEFAULT_HITS;
-    opt->smithwaterman = DEFAULT_SMITHWATERMAN;
     opt->evalue = DEFAULT_EVALUE;
     opt->gap_open = DEFAULT_GAPOPEN;
     opt->gap_extend = DEFAULT_GAPEXTEND;
@@ -101,7 +102,7 @@ void options_defaults(options_t *opt) {
     str2sm(DEFAULT_SUBSTITUTION, opt);
     opt->min_hit_length = DEFAULT_MINLENGTH;
     opt->min_hit_score = DEFAULT_MINSCORE;
-    opt->number_of_lookaheads = DEFAULT_LOOKAHEADS;
+    opt->number_of_seeds = DEFAULT_SEEDS;
     opt->number_of_alignments = DEFAULT_ALIGNMENTS;
     opt->superfast = 1;
     opt->seg_enabled = 1;
@@ -117,12 +118,7 @@ int main(int argc, char** argv) {
 /* output */
         { "hits",           required_argument,  NULL, 'H' },
         { "evalue",         required_argument,  NULL, 'E' },
-/* obsolete */
-//        { "window",         required_argument,  NULL, 'w' },
-//        { "votelist",       required_argument,  NULL, 'V' },
-//        { "votes",          required_argument,  NULL, 'v' },
 /* alignment */
-        { "fullsw",         no_argument,        NULL, 'x' },
         { "gapopen",        required_argument,  NULL, 'o' },
         { "gapextend",      required_argument,  NULL, 'e' },
         { "matrix",         required_argument,  NULL, 'm' },
@@ -133,13 +129,11 @@ int main(int argc, char** argv) {
 /* seeding */
         { "minlength",      required_argument,  NULL, 'l' },
         { "minscore",       required_argument,  NULL, 's' },
-//        { "scorethreshold", required_argument,  NULL, 't' },
-//        { "mindistance",    required_argument,  NULL, 'c' },
-//        { "maxdistance",    required_argument,  NULL, 'd' },
         { "blasttab",       no_argument,        NULL, 'B' },
         { "alignments",     required_argument,  NULL, 'A' },
         { "seeds",          required_argument,  NULL, 'S' },
         { "noseg",          no_argument,        NULL, 'M' },
+        { "fast",           no_argument,        NULL, 'F' },
         { 0, 0, 0, 0 }
     };
     int c;
@@ -175,7 +169,7 @@ int main(int argc, char** argv) {
 
     options_defaults(&opt);
 
-    while((c = getopt_long(argc - 1, argv + 1, "hf:p:H:o:e:xE:ma:k:g:l:s:t:c:d:T:BA:S:M", longopts, 0)) != -1) {
+    while((c = getopt_long(argc - 1, argv + 1, "hf:p:T:H:E:o:e:m:a:k:g:l:s:BA:S:MF", longopts, 0)) != -1) {
         switch(c) {
             case 'h':
                 usage();
@@ -186,15 +180,6 @@ int main(int argc, char** argv) {
             case 'p':
                 prefix = optarg;
                 break;
-/*
-            case 'w':
-                opt.suffix_window = strtol(optarg, &tmp, 10);
-                if(*tmp != '\0') {
-                    fprintf(stderr, "Error: invalid argument for --window, %s (%s)\n", strerror(errno), optarg);
-                    exit(EXIT_FAILURE);
-                }
-                break;
-*/
             case 'H':
                 opt.num_hits = strtol(optarg, &tmp, 10);
                 if(*tmp != '\0') {
@@ -202,22 +187,6 @@ int main(int argc, char** argv) {
                     exit(EXIT_FAILURE);
                 }
                 break;
-/*
-            case 'v':
-                opt.min_votes = strtol(optarg, &tmp, 10);
-                if(*tmp != '\0') {
-                    fprintf(stderr, "Error: invalid argument for --votes, %s (%s)\n", strerror(errno), optarg);
-                    exit(EXIT_FAILURE);
-                }
-                break;
-            case 'V':
-                opt.votelist_len = strtol(optarg, &tmp, 10);
-                if(*tmp != '\0') {
-                    fprintf(stderr, "Error: invalid argument for --votelist, %s (%s)\n", strerror(errno), optarg);
-                    exit(EXIT_FAILURE);
-                }
-                break;
-*/
             case 'o':
                 opt.gap_open = strtol(optarg, &tmp, 10);
                 if(*tmp != '\0') {
@@ -267,9 +236,6 @@ int main(int argc, char** argv) {
                     exit(EXIT_FAILURE);
                 }
                 break;
-            case 'x':
-                opt.smithwaterman = 1;
-                break;
             case 'l':
                 opt.min_hit_length = strtol(optarg, &tmp, 10);
                 if(*tmp != '\0') {
@@ -284,27 +250,6 @@ int main(int argc, char** argv) {
                     exit(EXIT_FAILURE);
                 }
                 break;
-//            case 't':
-//                opt.min_score_threshold = strtol(optarg, &tmp, 10);
-//                if(*tmp != '\0') {
-//                    fprintf(stderr, "Error: invalid argument for --scorethreshold, %s (%s)\n", strerror(errno), optarg);
-//                    exit(EXIT_FAILURE);
-//                }
-//                break;
-//            case 'c':
-//                opt.min_distance = strtol(optarg, &tmp, 10);
-//                if(*tmp != '\0') {
-//                    fprintf(stderr, "Error: invalid argument for --mindistance, %s (%s)\n", strerror(errno), optarg);
-//                    exit(EXIT_FAILURE);
-//                }
-//                break;
-//            case 'd':
-//                opt.max_distance = strtol(optarg, &tmp, 10);
-//                if(*tmp != '\0') {
-//                    fprintf(stderr, "Error: invalid argument for --maxdistance, %s (%s)\n", strerror(errno), optarg);
-//                    exit(EXIT_FAILURE);
-//                }
-//                break;
             case 'T':
                 opt.num_threads = strtol(optarg, &tmp, 10);
                 if(*tmp != '\0') {
@@ -323,15 +268,20 @@ int main(int argc, char** argv) {
                 }
                 break;
             case 'S':
-                opt.number_of_lookaheads = strtol(optarg, &tmp, 10);
+                opt.number_of_seeds = strtol(optarg, &tmp, 10);
                 if(*tmp != '\0') {
-                    fprintf(stderr, "Error: invalid argument for --lookaheads, %s (%s)\n", strerror(errno), optarg);
+                    fprintf(stderr, "Error: invalid argument for --seeds, %s (%s)\n", strerror(errno), optarg);
                     exit(EXIT_FAILURE);
                 }
                 break;
             case 'M':
                 opt.seg_enabled = 0;
                 fprintf(stderr, "WARNING: SEG disabled\n");
+                break;
+            case 'F' :
+                opt.number_of_seeds = FAST_SEEDS;
+                opt.number_of_alignments = FAST_ALIGNMENTS;
+                fprintf(stderr, "fast mode enabled\n");
                 break;
             case '?':
             default :
@@ -351,24 +301,25 @@ int main(int argc, char** argv) {
         fprintf(stderr, "ERROR: you must specify a database prefix\n");
         exit(EXIT_FAILURE);
     }
-/*
+
     if(opt.min_hit_length < 3) {
-        fprintf(stderr, "ERROR: minimum common substring length must be at least 3\n");
+        fprintf(stderr, "ERROR: minimum seed length must be at least 3\n");
         exit(EXIT_FAILURE);
     }
-*/
+
     if(opt.number_of_alignments < 0) {
         fprintf(stderr, "ERROR: number of alignments must be positive\n");
         exit(EXIT_FAILURE);
     }
 
-    if(opt.number_of_lookaheads < 0) {
-        fprintf(stderr, "ERROR: number of lookaheads must be positive\n");
+    if(opt.number_of_seeds < 0) {
+        fprintf(stderr, "ERROR: number of seeds must be positive\n");
         exit(EXIT_FAILURE);
     }
 
-    // TODO add other input checking
+#ifdef CHATTY
     fprintf(stderr, "\nWARNING: this code uses a different internal alphabet, \n         internal2aa() in lexicographical.h needs to be called to output sequences\n\n");
+#endif
 
     switch(command) {
         case INDEX_COMMAND :

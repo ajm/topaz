@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <sys/time.h>
 #include <pthread.h>
+#include <inttypes.h>
 
 #include "fasta.h"
 #include "db.h"
@@ -32,6 +33,9 @@ typedef struct {
     struct timeval start_time;
     double total_suffix_time;
     double total_alignment_time;
+
+    uint64_t number_of_nonzero_hit_queries;
+    uint32_t number_of_hits_total;
 
 } search_t;
 

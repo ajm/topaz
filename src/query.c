@@ -140,7 +140,7 @@ int query_fetch_alignment_batch(query_t* q) {
     saidx64_t SAindex, Qoffset;
     int gapless_score, gapless_length;
     hit_t *h;
-    int batch_size = q->opt->number_of_lookaheads;
+    int batch_size = q->opt->number_of_seeds;
     int counter = 0;
 
 #ifdef CHATTY
