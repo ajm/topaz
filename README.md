@@ -10,8 +10,6 @@ If you have an questions about installing or running TOPAZ, please contact <a hr
 
 ## Installation
 
-TOPAZ uses TCmalloc from Google's GPerfTools from [here](https://github.com/gperftools/gperftools).
-
 Download TOPAZ source code and compile:
 
     git clone https://github.com/ajm/topaz.git
@@ -26,17 +24,21 @@ TOPAZ has an index command to generate databases. Here we create a database cont
 
 ## Searching
 
-Once the database has finished indexing, we can search the database for homologous proteins to the sequences in queries.fasta. By default, TOPAZ searches for 1000 hits per query sequence with an E-values less than 1.0:
+Once the database has finished indexing, we can search the database for homologous proteins to the sequences in queries.fasta. By default, TOPAZ searches for 100 hits per query sequence with an E-values less than 1e-3:
 
     topaz search -f queries.fasta -p DB -T 16 > results.txt
 
-By default, TOPAZ only outputs the ids of the query and subject, the E-value and the bitscore. The option -B outputs BLAST format 6:
+In tests TOPAZ was found to have the same sensitivity as DIAMOND. But we also offer a fast mode (--fast) that is almost as sensitivie:
 
-    time topaz search -f queries.fasta -p DB -T 16 -B > results.txt
+    topaz search -f queries.fasta -p DB -T 16 --fast > results.txt
+
+By default, TOPAZ only outputs the ids of the query and subject, the E-value and the bitscore. The --blasttab option outputs BLAST format 6:
+
+    time topaz search -f queries.fasta -p DB -T 16 --blasttab > results.txt
 
 Or change the number of hits (-H) or the E-value threshold (-E):
 
-    topaz search -f queries.fasta -p DB -T 16 -H 100 -E 1e-9 > results.txt
+    topaz search -f queries.fasta -p DB -T 16 -H 1000 -E 1e-9 > results.txt
 
 Additional command line options can be found in the help information:
 
