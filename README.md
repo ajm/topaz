@@ -1,6 +1,6 @@
 # TOPAZ: asymmetric suffix array neighbourhood search for massive protein databases
 
-TOPAZ is a high-performance homology search method based on asymmetric suffix array search, scored seeds and optimal substitution ordering. A manuscript describing its operation is currently under review.
+TOPAZ is a high-performance homology search method based on asymmetric suffix array neighbourhood search (SANS), scored seeds and optimal substitution ordering. A manuscript describing its operation is currently under review.
 
 The TOPAZ source code is licensed under the [GPLv3](https://www.gnu.org/licenses/gpl-3.0.en.html).
 
