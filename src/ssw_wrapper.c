@@ -489,8 +489,9 @@ int main(int argc, char** argv) {
         //printf("%d\n", length);
 
         //align_using_ssw(s1, s2, &hit, &par);
+        hit.gapless_score = 1000;
         align_using_ssw_profile(prof, s2, &hit, &par);
-            stats_using_ssw_profile(prof, s2, &hit, &par);
+        stats_using_ssw_profile(prof, s2, &hit, &par);
         //printf("%.*s %f %f\n", seq_idlen(s2), seq_idptr(s2), hit.evalue, hit.bitscore);
 
         printf("%.*s %d %f %f %d-%d %d-%d\n", seq_idlen(s2), seq_idptr(s2), hit.rawscore, hit.bitscore, hit.evalue, hit.qstart, hit.qend, hit.sstart, hit.send);

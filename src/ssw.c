@@ -41,6 +41,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <limits.h>
 #include "ssw.h"
 
 #ifdef __GNUC__
@@ -578,10 +579,19 @@ static int banded_sw (const int8_t* ref,
 		while (width_d * readLen * 3 >= s2) {
 			++s2;
 			kroundup32(s2);
-			if (s2 < 0) {
-				fprintf(stderr, "Alignment score and position are not consensus.\n");
-				exit(1);
+			if ((s2 < 0) || (s2 > INT_MAX)) {
+                *length = *gapopen = *mismatch = -1;
+                *identity = -1.0;
+                return 0;
+				//fprintf(stderr, "Alignment score and position are not consensus.\n");
+				//exit(1);
 			}
+            /*
+            if(s2 > INT_MAX) {
+                fprintf(stderr, "You don't have that much memory!\n");
+                exit(1);
+            }
+            */
 			direction = (int8_t*)realloc(direction, s2 * sizeof(int8_t));
 		}
 		direction_line = direction;
@@ -916,7 +926,7 @@ int ssw_align_stats (const s_profile* prof,
 	readLen = read_end1 - *read_begin1 + 1;
 	band_width = abs(refLen - readLen) + 1;
 
-    //fprintf(stderr, "%d %d-%d %d-%d\n", score1, ref_begin1, ref_end1, read_begin1, read_end1);
+    //fprintf(stderr, "%d (%d-%d, %d-%d)\n", score1, *read_begin1, read_end1, *ref_begin1, ref_end1);
     //return 0;
 
 	return banded_sw(ref + *ref_begin1, 

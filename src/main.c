@@ -21,7 +21,7 @@ void usage() {
 "\t-T INT, --threads INT (number of threads, default = %d)\n"
 "\nOutput:\n"
 "\t-H INT, --hits INT (default = %d)\n"
-"\t-E FLOAT, --evalue FLOAT (default = %.1f)\n"
+"\t-E FLOAT, --evalue FLOAT (default = %.1e)\n"
 "\nAsymmetric SANS:\n"
 "\t-S INT, --seeds INT (default = %d)\n"
 "\t-A INT, --alignments INT (default = %d)\n"
