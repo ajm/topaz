@@ -450,7 +450,7 @@ int main(int argc, char** argv) {
 
     fasta_t* f;
 
-    f = fasta_alloc("bad_ff1.fasta");
+    f = fasta_alloc("second_bad_ff1.fa");
     s1 = fasta_next(f, NULL);
     fasta_free(f);
 
@@ -478,7 +478,7 @@ int main(int argc, char** argv) {
 
     prof = get_ssw_profile(s1, &par);
 
-    f = fasta_alloc("bad_ff2.fasta");
+    f = fasta_alloc("second_bad_ff2.fa");
     while((s2 = fasta_next(f, NULL)) != NULL) {
 
         seq_2internal(s2);

@@ -552,7 +552,7 @@ static int banded_sw (const int8_t* ref,
 
 	//uint32_t *c = (uint32_t*)malloc(16 * sizeof(uint32_t)), *c1;
 	int32_t i, j, e, f, temp1, temp2, s = 16, s1 = 8, max = 0, identical = 0; //, l;
-	int64_t s2 = 1024;
+	int64_t s2 = 1024, s2_tmp;
 	char op, prev_op;
 	int32_t width, width_d, *h_b, *e_b, *h_c;
 	int8_t *direction, *direction_line;
@@ -572,16 +572,35 @@ static int banded_sw (const int8_t* ref,
 		while (width >= s1) {
 			++s1;
 			kroundup32(s1);
+        }
 			h_b = (int32_t*)realloc(h_b, s1 * sizeof(int32_t));
 			e_b = (int32_t*)realloc(e_b, s1 * sizeof(int32_t));
 			h_c = (int32_t*)realloc(h_c, s1 * sizeof(int32_t));
-		}
-		while (width_d * readLen * 3 >= s2) {
+		
+        s2_tmp = width_d;
+        s2_tmp *= readLen;
+        s2_tmp *= 3;
+        //fprintf(stderr, "%d * %d * 3 = %ld\n", width_d, readLen, s2_tmp);
+        if(s2_tmp > INT_MAX) {
+            *length = *gapopen = *mismatch = -1;
+            *identity = -1.0;
+            free(direction);
+            free(h_c);
+            free(e_b);
+            free(h_b);
+            return 0;
+        }
+		while (s2_tmp >= s2) {
 			++s2;
 			kroundup32(s2);
-			if ((s2 < 0) || (s2 > INT_MAX)) {
+			if ((s2 < 0) || (s2 >= INT_MAX)) {
+                //fprintf(stderr, "MAX 2\n");
                 *length = *gapopen = *mismatch = -1;
                 *identity = -1.0;
+                free(direction);
+                free(h_c);
+                free(e_b);
+                free(h_b);
                 return 0;
 				//fprintf(stderr, "Alignment score and position are not consensus.\n");
 				//exit(1);
@@ -592,8 +611,9 @@ static int banded_sw (const int8_t* ref,
                 exit(1);
             }
             */
+        }
 			direction = (int8_t*)realloc(direction, s2 * sizeof(int8_t));
-		}
+		//fprintf(stderr, "s1=%d s2=%d\n", s1, s2);
 		direction_line = direction;
 		for (j = 1; LIKELY(j < width - 1); j ++) h_b[j] = 0;
 		for (i = 0; LIKELY(i < readLen); i ++) {
