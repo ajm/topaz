@@ -24,7 +24,11 @@ TOPAZ has an index command to generate databases. Here we create a database cont
 
 ## Searching
 
-Once the database has finished indexing, we can search the database for homologous proteins to the sequences in queries.fasta. By default, TOPAZ searches for 100 hits per query sequence with an E-values less than 1e-3:
+Once the database has finished indexing, we can search the database for homologous proteins to the sequences in queries.fasta. (If you did not just do the indexing, then you should run the following command to ensure the database is in the OS buffer cache):
+
+    cat DB.ind DB.phr DB.pin DB.psq DB.SA > /dev/null
+
+By default, TOPAZ searches for 100 hits per query sequence with an E-values less than 1e-3:
 
     topaz search -f queries.fasta -p DB -T 16 > results.txt
 
