@@ -35,7 +35,7 @@ EXECUTABLE=topaz
 all: $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJECTS)
-	$(CC) $(LDFLAGS) $(OBJECTS) -o $@
+	$(CC) $(OBJECTS) $(LDFLAGS) -o $@ 
 
 %.o: %.c
 	$(CC) $(CFLAGS) $(INCLUDES) $< -o $@
